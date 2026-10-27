@@ -1,0 +1,4955 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <title>空间塔罗 · 思维语法系统</title>
+  <meta name="description" content="78 张塔罗牌的空间运动、四向语义、自定义语法网格与外部解读资料导出系统。纯前端，无需联网。">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230b0820'/%3E%3Ccircle cx='32' cy='32' r='18' fill='none' stroke='%23e2c17c' stroke-width='2'/%3E%3Ccircle cx='32' cy='32' r='5' fill='%23e2c17c'/%3E%3C/svg%3E">
+  <style>
+/* ============================================================
+   空间塔罗 · 思维语法系统
+   ========================================================== */
+
+:root {
+  --bg: #06050d;
+  --panel: rgba(20, 15, 38, 0.72);
+  --panel-2: rgba(12, 9, 24, 0.85);
+  --line: rgba(226, 193, 124, 0.16);
+  --line-strong: rgba(226, 193, 124, 0.4);
+  --gold: #e2c17c;
+  --gold-2: #f3dfa9;
+  --gold-dim: #b8944e;
+  --ink: #efe7d4;
+  --muted: #9c93b2;
+  --main: #dca258;
+  --main-deep: #8c5c28;
+  --mod: #6fb680;
+  --mod-deep: #346642;
+  --danger: #e08a7a;
+  --radius: 16px;
+  --font-display: "Cormorant Garamond", "Baskerville", "Georgia", "Songti SC", "STSong", "SimSun", serif;
+  --font-body: "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", "Segoe UI", system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+[hidden] { display: none !important; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--ink);
+  font-family: var(--font-body);
+  background:
+    radial-gradient(1200px 800px at 12% 0%, rgba(92, 62, 178, 0.22), transparent 62%),
+    radial-gradient(900px 700px at 88% 12%, rgba(180, 120, 60, 0.12), transparent 60%),
+    radial-gradient(1000px 900px at 60% 100%, rgba(60, 40, 120, 0.2), transparent 65%),
+    linear-gradient(180deg, #09070f 0%, #06050d 60%, #080611 100%);
+  background-attachment: fixed;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    radial-gradient(1px 1px at 18% 22%, rgba(255, 255, 255, 0.35), transparent 60%),
+    radial-gradient(1px 1px at 72% 14%, rgba(255, 255, 255, 0.25), transparent 60%),
+    radial-gradient(1.4px 1.4px at 44% 68%, rgba(255, 255, 255, 0.22), transparent 60%),
+    radial-gradient(1px 1px at 86% 54%, rgba(255, 255, 255, 0.28), transparent 60%),
+    radial-gradient(1px 1px at 30% 86%, rgba(255, 255, 255, 0.2), transparent 60%);
+}
+
+.sys-app {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 1740px;
+  margin: 0 auto;
+  padding: 18px clamp(14px, 2.4vw, 34px) 34px;
+}
+
+/* ---------- 顶部 ---------- */
+.sys-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.sys-brand { display: flex; align-items: center; gap: 16px; min-width: 0; }
+
+.back-link {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 13px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--muted);
+  font-size: 11.5px;
+  letter-spacing: 0.08em;
+  text-decoration: none;
+  transition: 0.2s ease;
+}
+.back-link:hover { color: var(--gold); border-color: var(--line-strong); }
+
+.sys-title h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(20px, 2.4vw, 30px);
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  line-height: 1.15;
+}
+.sys-title h1 span { color: var(--gold); }
+.sys-sub {
+  margin: 5px 0 0;
+  font-size: 10.5px;
+  letter-spacing: 0.18em;
+  color: var(--muted);
+}
+
+.stage-bar { display: flex; flex-wrap: wrap; gap: 6px; }
+.stage {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--muted);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  transition: 0.2s ease;
+  white-space: nowrap;
+}
+.stage i {
+  font-style: normal;
+  width: 16px;
+  height: 16px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 9px;
+}
+.stage.is-done { color: var(--gold); border-color: rgba(226, 193, 124, 0.28); }
+.stage.is-done i { background: rgba(226, 193, 124, 0.16); color: var(--gold); }
+.stage.is-current {
+  color: var(--ink);
+  border-color: rgba(226, 193, 124, 0.6);
+  background: rgba(226, 193, 124, 0.08);
+  box-shadow: 0 0 18px -8px rgba(226, 193, 124, 0.8);
+}
+.stage.is-current i { background: rgba(226, 193, 124, 0.26); color: var(--gold-2); }
+
+/* ---------- 面板通用 ---------- */
+.panel {
+  position: relative;
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: linear-gradient(160deg, var(--panel), var(--panel-2));
+  box-shadow: 0 26px 60px -40px #000, inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.panel-head h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  color: var(--gold-2);
+}
+
+.hint { font-size: 10.5px; color: var(--muted); letter-spacing: 0.05em; }
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(226, 193, 124, 0.3);
+  background: rgba(226, 193, 124, 0.08);
+  color: var(--gold);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+}
+
+/* ---------- 问题 ---------- */
+.question-input,
+.extra-grid input,
+.extra-grid textarea {
+  width: 100%;
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  line-height: 1.7;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 10px 12px;
+  outline: none;
+  resize: vertical;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.question-input { min-height: 58px; }
+.question-input:focus,
+.extra-grid input:focus,
+.extra-grid textarea:focus {
+  border-color: rgba(226, 193, 124, 0.55);
+  box-shadow: 0 0 0 3px rgba(226, 193, 124, 0.08);
+}
+
+.extra { margin-top: 10px; }
+.extra summary {
+  cursor: pointer;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  outline: none;
+  user-select: none;
+}
+.extra summary:hover { color: var(--gold); }
+.extra-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 10px;
+}
+.extra-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 10.5px;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+}
+.extra-grid label.wide { grid-column: 1 / -1; }
+
+/* ---------- 工作台 ---------- */
+.desk {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 376px;
+  gap: 16px;
+  align-items: stretch;
+}
+
+.table-panel { min-width: 0; display: flex; flex-direction: column; }
+
+.table-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; }
+
+/* 桌布 */
+.tablecloth {
+  position: relative;
+  width: min(100%, 980px);
+  min-width: 280px;
+  aspect-ratio: 1 / 1;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid rgba(226, 193, 124, 0.24);
+  background:
+    radial-gradient(circle at 50% 44%, rgba(98, 64, 152, 0.34), transparent 64%),
+    radial-gradient(circle at 16% 10%, rgba(226, 193, 124, 0.1), transparent 42%),
+    radial-gradient(circle at 84% 90%, rgba(118, 78, 190, 0.16), transparent 55%),
+    linear-gradient(160deg, #141026 0%, #0a0718 62%, #080512 100%);
+  box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.8), 0 34px 70px -34px #000;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+.cloth-tex { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+
+.cloth-frame {
+  position: absolute;
+  inset: 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(226, 193, 124, 0.18);
+  pointer-events: none;
+}
+.cloth-frame::before,
+.cloth-frame::after {
+  content: "";
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  border-color: rgba(226, 193, 124, 0.5);
+  border-style: solid;
+}
+.cloth-frame::before { top: -1px; left: -1px; border-width: 1px 0 0 1px; border-top-left-radius: 12px; }
+.cloth-frame::after { bottom: -1px; right: -1px; border-width: 0 1px 1px 0; border-bottom-right-radius: 12px; }
+
+.time-axis {
+  position: absolute;
+  left: 7%;
+  right: 7%;
+  bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+  opacity: 0.42;
+  z-index: 3;
+}
+.time-axis.pulse { animation: taPulse 0.9s ease; }
+@keyframes taPulse {
+  0% { opacity: 0.3; transform: translateX(0); }
+  35% { opacity: 0.95; }
+  100% { opacity: 0.42; transform: translateX(0); }
+}
+.ta-label { font-size: 9px; letter-spacing: 0.22em; color: rgba(226, 193, 124, 0.85); white-space: nowrap; }
+.ta-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(226, 193, 124, 0.05), rgba(226, 193, 124, 0.75));
+}
+.ta-head {
+  width: 0;
+  height: 0;
+  border-left: 9px solid rgba(226, 193, 124, 0.85);
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+}
+
+.cards-layer { position: absolute; inset: 0; }
+.cards-layer.no-anim .tcard,
+.cards-layer.no-anim .tcard-rot,
+.cards-layer.no-anim .tcard-flip { transition: none !important; }
+
+.table-hint { display: none !important; }
+
+.table-hint {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: rgba(6, 4, 14, 0.72);
+  border: 1px solid rgba(226, 193, 124, 0.22);
+  color: rgba(226, 193, 124, 0.85);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+  z-index: 2;
+  white-space: nowrap;
+}
+.table-hint[hidden] { display: none; }
+
+/* 桌面卡片 */
+.tcard {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--cw, 52px);
+  height: var(--ch, 86px);
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  transform: translate3d(0, 0, 0);
+  transition: transform 0.55s cubic-bezier(0.2, 0.75, 0.3, 1);
+  will-change: transform;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+  contain: layout style;
+}
+
+.tcard-rot {
+  position: absolute;
+  inset: 0;
+  transform: rotate(0deg);
+  transition: transform 0.72s cubic-bezier(0.32, 0.8, 0.3, 1);
+  will-change: transform;
+}
+
+.tcard-flip {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transform: rotateY(0deg);
+  transition: transform 0.8s cubic-bezier(0.3, 0.85, 0.3, 1);
+}
+.tcard.is-revealed .tcard-flip {
+  transform: rotateY(180deg);
+  transition-delay: calc(var(--flip-order, 0) * 70ms);
+}
+
+.tcard-back,
+.tcard-face {
+  position: absolute;
+  inset: 0;
+  border-radius: calc(var(--cw, 52px) * 0.1);
+  overflow: hidden;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  background: #0b0818;
+}
+.tcard-face { transform: rotateY(180deg); }
+.tcard-back svg,
+.tcard-face svg { display: block; width: 100%; height: 100%; }
+
+.dir-mark {
+  position: absolute;
+  top: 4%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: calc(var(--cw, 52px) * 0.05) solid transparent;
+  border-right: calc(var(--cw, 52px) * 0.05) solid transparent;
+  border-bottom: calc(var(--cw, 52px) * 0.08) solid rgba(243, 223, 169, 0.75);
+  filter: drop-shadow(0 0 2px rgba(226, 193, 124, 0.7));
+  pointer-events: none;
+  opacity: 0.85;
+}
+
+.tcard-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: calc(var(--cw, 52px) * 0.34);
+  height: calc(var(--cw, 52px) * 0.34);
+  padding: 0 3px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #f6e3b0, #c9a45c);
+  color: #1c1206;
+  font-family: var(--font-display);
+  font-size: calc(var(--cw, 52px) * 0.22);
+  font-weight: 700;
+  line-height: 1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+  pointer-events: none;
+  z-index: 5;
+}
+
+.tcard:hover { filter: brightness(1.18); }
+.tcard:focus-visible { filter: brightness(1.2); }
+.tcard.is-selected { filter: drop-shadow(0 0 9px rgba(226, 193, 124, 0.85)); }
+.tcard.is-selected .tcard-back,
+.tcard.is-selected .tcard-face {
+  box-shadow: 0 0 0 2px var(--gold), 0 10px 20px rgba(0, 0, 0, 0.7);
+}
+.tablecloth.is-frozen .tcard:not(.is-selected) { opacity: 0.34; filter: grayscale(0.45); }
+.tablecloth.is-frozen .tcard { cursor: default; }
+.tablecloth.is-frozen .tcard.is-selected { cursor: zoom-in; }
+
+.table-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px 18px;
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+}
+.table-foot b { color: var(--gold); font-family: var(--font-display); font-size: 14px; }
+.tf-item#freezeLabel.is-frozen { color: #ffcdb8; }
+.dir-digest { display: inline-flex; align-items: center; gap: 6px; }
+.dir-digest span { color: var(--ink); letter-spacing: 0.04em; }
+
+/* ---------- 右侧控制栏 ---------- */
+.rail { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+
+.op-list { display: flex; flex-direction: column; gap: 6px; }
+
+.op-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 11px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: rgba(255, 255, 255, 0.022);
+  color: var(--ink);
+  font-family: var(--font-body);
+  text-align: left;
+  cursor: pointer;
+  transition: 0.18s ease;
+}
+.op-btn:hover:not(:disabled) {
+  border-color: rgba(226, 193, 124, 0.5);
+  background: rgba(226, 193, 124, 0.07);
+  transform: translateY(-1px);
+}
+.op-btn:active:not(:disabled) { transform: scale(0.992); }
+.op-btn:disabled { opacity: 0.32; cursor: not-allowed; }
+.op-btn.is-flash { animation: opFlash 0.55s ease; }
+@keyframes opFlash {
+  0% { box-shadow: 0 0 0 0 rgba(226, 193, 124, 0.55); }
+  100% { box-shadow: 0 0 0 14px rgba(226, 193, 124, 0); }
+}
+
+.op-glyph {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid rgba(226, 193, 124, 0.32);
+  color: var(--gold);
+  font-size: 14px;
+  background: radial-gradient(circle, rgba(226, 193, 124, 0.14), transparent 72%);
+}
+.op-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.op-text b { font-size: 12px; font-weight: 500; letter-spacing: 0.09em; }
+.op-text small {
+  font-size: 9.5px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.op-count {
+  flex: 0 0 auto;
+  min-width: 20px;
+  text-align: right;
+  font-family: var(--font-display);
+  font-size: 15px;
+  color: var(--gold);
+}
+.op-reverse { border-color: rgba(224, 138, 122, 0.26); }
+.op-reverse .op-glyph { color: #f0b4a4; border-color: rgba(224, 138, 122, 0.42); background: radial-gradient(circle, rgba(224, 138, 122, 0.14), transparent 72%); }
+
+.reverse-box {
+  margin-top: 9px;
+  padding: 9px 10px;
+  border-radius: 12px;
+  border: 1px dashed rgba(224, 138, 122, 0.32);
+  background: rgba(224, 138, 122, 0.045);
+}
+.rb-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+}
+.rb-head em { font-style: normal; color: #f0b4a4; letter-spacing: 0.08em; }
+
+.segmented { display: flex; gap: 5px; }
+.segmented button {
+  flex: 1;
+  padding: 6px 2px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: transparent;
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: 10.5px;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: 0.18s ease;
+}
+.segmented button:hover { color: var(--ink); border-color: rgba(224, 138, 122, 0.5); }
+.segmented button.on {
+  border-color: rgba(224, 138, 122, 0.7);
+  background: rgba(224, 138, 122, 0.16);
+  color: #ffd9cf;
+  box-shadow: 0 0 16px -8px rgba(224, 138, 122, 0.9);
+}
+.rb-desc { margin: 8px 0 0; font-size: 10px; line-height: 1.7; color: var(--muted); min-height: 34px; }
+
+.rail-actions { display: flex; gap: 8px; margin-top: 10px; }
+.rail-status {
+  margin: 10px 0 0;
+  padding-top: 9px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+/* 通用按钮 */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: 0.2s ease;
+  white-space: nowrap;
+}
+.btn:hover:not(:disabled) { border-color: var(--line-strong); color: var(--gold-2); }
+.btn:disabled { opacity: 0.34; cursor: not-allowed; }
+.btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.btn.ghost { background: transparent; }
+.btn.danger { color: #e6a495; }
+.btn.danger:hover:not(:disabled) { border-color: rgba(224, 138, 122, 0.6); color: #ffc4b5; }
+.btn.primary {
+  color: #1c1206;
+  font-weight: 600;
+  border-color: rgba(255, 236, 190, 0.55);
+  background: linear-gradient(180deg, #f3dfa9 0%, #e2c17c 48%, #b8944e 100%);
+  box-shadow: 0 10px 26px -14px rgba(226, 193, 124, 0.95), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+.btn.primary:hover:not(:disabled) { box-shadow: 0 14px 32px -14px rgba(240, 207, 130, 1), inset 0 1px 0 rgba(255, 255, 255, 0.65); transform: translateY(-1px); }
+.btn.primary:disabled { opacity: 0.28; filter: saturate(0.45); box-shadow: none; }
+.btn.wide { width: 100%; margin-top: 10px; }
+
+/* 抽牌清单 */
+.selection {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 152px;
+  overflow-y: auto;
+}
+.selection:empty { display: none; }
+.sel-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 9px;
+  border-radius: 9px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.024);
+  animation: selIn 0.28s ease both;
+}
+@keyframes selIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.sel-idx {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(226, 193, 124, 0.16);
+  color: var(--gold);
+  font-family: var(--font-display);
+  font-size: 11px;
+}
+.sel-body { flex: 1; min-width: 0; }
+.sel-name { font-size: 12px; letter-spacing: 0.04em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sel-name.hidden-name { color: var(--muted); letter-spacing: 0.14em; }
+.sel-meta { font-size: 9.5px; color: var(--muted); margin-top: 1px; letter-spacing: 0.04em; }
+.sel-remove {
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: transparent;
+  color: var(--muted);
+  font-size: 10px;
+  cursor: pointer;
+  transition: 0.18s ease;
+}
+.sel-remove:hover { color: #ffc4b5; border-color: rgba(224, 138, 122, 0.6); }
+
+.sel-empty { margin: 0; padding: 8px 2px 2px; font-size: 10.5px; line-height: 1.8; color: var(--muted); }
+
+/* 操作历史 */
+.log-panel { min-height: 120px; }
+.event-list {
+  list-style: none;
+  margin: 0;
+  padding: 0 2px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  max-height: 156px;
+  overflow-y: auto;
+  font-size: 10.5px;
+}
+.event-list:empty::after {
+  content: "还没有操作。五个按钮的顺序、次数与节奏都会记录在这里。";
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.8;
+}
+.event-item {
+  display: flex;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.022);
+  border-left: 2px solid rgba(226, 193, 124, 0.4);
+}
+.event-item.t-reverse { border-left-color: rgba(224, 138, 122, 0.7); }
+.event-seq { color: var(--muted); font-family: var(--font-display); min-width: 18px; }
+.event-text { flex: 1; min-width: 0; line-height: 1.6; }
+.event-text b { font-weight: 500; color: var(--ink); }
+.event-text small { display: block; color: var(--muted); font-size: 9.5px; }
+
+/* ---------- 已揭示 ---------- */
+.gallery {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  padding: 4px 2px 12px;
+  scrollbar-width: thin;
+}
+.g-card {
+  flex: 0 0 auto;
+  width: 128px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: center;
+}
+.g-art {
+  position: relative;
+  width: 128px;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 14px 28px -16px #000, 0 0 0 1px rgba(226, 193, 124, 0.22);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  background: #0b0818;
+}
+.g-art svg { display: block; width: 100%; height: auto; }
+.g-card:hover .g-art { transform: translateY(-4px); box-shadow: 0 20px 34px -16px #000, 0 0 0 1px var(--line-strong); }
+.g-idx {
+  position: absolute;
+  left: 5px;
+  top: 5px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(6, 4, 14, 0.8);
+  border: 1px solid rgba(226, 193, 124, 0.5);
+  color: var(--gold);
+  font-family: var(--font-display);
+  font-size: 10px;
+}
+.g-name { font-size: 11.5px; letter-spacing: 0.05em; }
+.g-dir { font-size: 9.5px; color: var(--muted); letter-spacing: 0.08em; }
+.g-dir.rev { color: #e09280; }
+.g-dir.in { color: #9fb6e8; }
+.g-dir.out { color: #e8c58f; }
+
+/* ---------- 网格 ---------- */
+.grid-tools { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.legend { display: inline-flex; align-items: center; gap: 6px; font-size: 10px; color: var(--muted); }
+.legend .sw { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+.legend .sw.main { background: linear-gradient(160deg, #dca258, #8c5c28); }
+.legend .sw.mod { background: linear-gradient(160deg, #6fb680, #346642); margin-left: 8px; }
+.size-field { font-size: 10px; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
+.size-field select {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--ink);
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-family: inherit;
+  outline: none;
+}
+
+.grid-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 700px) 324px;
+  gap: 16px;
+  align-items: start;
+  justify-content: center;
+}
+
+.grid-frame { max-width: 700px; width: 100%; justify-self: center; }
+
+.grid-scroll { min-width: 0; }
+
+.grid-frame {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  grid-template-rows: 22px minmax(0, 1fr);
+  gap: 4px;
+  min-width: 0;
+}
+.grid-corner { grid-column: 1; grid-row: 1; }
+.grid-col-labels { grid-column: 2; grid-row: 1; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; align-items: center; }
+.grid-col-labels span { text-align: center; font-size: 9.5px; color: var(--muted); }
+.grid-row-labels { grid-column: 1; grid-row: 2; display: grid; grid-auto-flow: row; grid-auto-rows: 1fr; align-items: center; }
+.grid-row-labels span { text-align: center; font-size: 9.5px; color: var(--muted); }
+
+.grid-board {
+  grid-column: 2;
+  grid-row: 2;
+  display: grid;
+  grid-template-columns: repeat(var(--n, 7), minmax(0, 1fr));
+  gap: 5px;
+  aspect-ratio: 1 / 1;
+  touch-action: manipulation;
+}
+.gcell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  min-width: 0;
+  min-height: 0;
+  padding: 2px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.018);
+  color: rgba(255, 255, 255, 0.26);
+  font-family: inherit;
+  cursor: pointer;
+  transition: 0.15s ease;
+}
+.gcell:hover { border-color: rgba(226, 193, 124, 0.5); background: rgba(226, 193, 124, 0.06); }
+.gcell.is-main {
+  color: #ffd9a8;
+  background: linear-gradient(160deg, rgba(192, 138, 69, 0.34), rgba(140, 92, 40, 0.18));
+  border-color: rgba(220, 162, 88, 0.72);
+  box-shadow: inset 0 0 18px rgba(220, 162, 88, 0.12);
+}
+.gcell.is-mod {
+  color: #c8f0d2;
+  background: linear-gradient(160deg, rgba(95, 156, 109, 0.32), rgba(52, 102, 66, 0.16));
+  border-color: rgba(111, 182, 128, 0.68);
+  box-shadow: inset 0 0 18px rgba(95, 156, 109, 0.1);
+}
+.gcell.is-active { outline: 2px solid var(--gold-2); outline-offset: 2px; }
+.gcell .tag { font-size: 8.5px; letter-spacing: 0.08em; opacity: 0.8; line-height: 1; }
+.gcell .num { font-family: var(--font-display); font-size: clamp(13px, 1.5vw, 19px); line-height: 1; }
+.gcell .nm { max-width: 100%; font-size: 8.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0.75; }
+
+.grid-editor {
+  position: sticky;
+  top: 16px;
+  min-height: 240px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.22);
+  font-size: 11.5px;
+}
+.ge-empty { color: var(--muted); font-size: 11px; line-height: 1.9; margin: 0; }
+.ge-pos {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  color: var(--gold);
+}
+.ge-pos small { font-size: 9.5px; color: var(--muted); letter-spacing: 0.06em; }
+.type-switch { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-bottom: 12px; }
+.type-switch button {
+  padding: 7px 2px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: transparent;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 10.5px;
+  cursor: pointer;
+  transition: 0.16s ease;
+}
+.type-switch button:hover { color: var(--ink); border-color: rgba(226, 193, 124, 0.45); }
+.type-switch button.on-main { border-color: rgba(220, 162, 88, 0.85); background: rgba(192, 138, 69, 0.26); color: #ffd9a8; }
+.type-switch button.on-mod { border-color: rgba(111, 182, 128, 0.85); background: rgba(95, 156, 109, 0.22); color: #c8f0d2; }
+
+.ge-field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; font-size: 10px; color: var(--muted); }
+.ge-field select {
+  width: 100%;
+  padding: 7px 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.34);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 11.5px;
+  outline: none;
+}
+.ge-field select:disabled { opacity: 0.4; }
+.ge-preview {
+  padding: 8px 10px;
+  border-radius: 9px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.02);
+  font-size: 10.5px;
+  line-height: 1.7;
+  color: var(--muted);
+  margin-bottom: 10px;
+  min-height: 48px;
+}
+.ge-preview b { color: var(--ink); font-weight: 500; }
+.ge-clear {
+  width: 100%;
+  padding: 7px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: transparent;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 10.5px;
+  cursor: pointer;
+}
+.ge-clear:hover { color: #ffc4b5; border-color: rgba(224, 138, 122, 0.5); }
+
+.adv-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: var(--muted);
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+}
+.adv-check input { width: 13px; height: 13px; margin: 0; accent-color: #e2c17c; }
+
+.grid-panel.is-locked { opacity: 0.82; }
+.grid-panel.is-locked .gcell { pointer-events: none; }
+.grid-panel.is-locked .grid-editor,
+.grid-panel.is-locked .grid-tools select,
+.grid-panel.is-locked .grid-tools .adv-check { pointer-events: none; opacity: 0.62; }
+.segmented button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.grid-status { margin: 0 0 12px; }
+.grid-ok {
+  margin: 0;
+  padding: 7px 11px;
+  border-radius: 9px;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  background: rgba(95, 156, 109, 0.1);
+  border: 1px solid rgba(111, 182, 128, 0.32);
+  color: #b9e3c3;
+}
+.grid-ok.is-bad {
+  background: rgba(224, 138, 122, 0.08);
+  border-color: rgba(224, 138, 122, 0.34);
+  color: #f0b4a4;
+}
+.grid-errors { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 5px; }
+.grid-errors li {
+  padding: 6px 10px;
+  border-radius: 8px;
+  border-left: 2px solid rgba(224, 138, 122, 0.8);
+  background: rgba(224, 138, 122, 0.07);
+  font-size: 10.5px;
+  line-height: 1.7;
+  color: #f3c8bd;
+}
+.grid-note { margin: 12px 0 0; font-size: 10px; line-height: 1.9; color: rgba(156, 147, 178, 0.72); }
+
+/* ---------- 导出 ---------- */
+.export-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.output {
+  margin: 0;
+  max-height: 560px;
+  overflow: auto;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.32);
+  color: #e6ddc8;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, "Microsoft YaHei", monospace;
+  font-size: 11.5px;
+  line-height: 1.85;
+  white-space: pre-wrap;
+  word-break: break-word;
+  outline: none;
+}
+.output:focus-visible { border-color: var(--line-strong); }
+
+.sys-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: rgba(156, 147, 178, 0.55);
+}
+
+/* ---------- 弹层 ---------- */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(4, 3, 10, 0.76);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  opacity: 0;
+  transition: opacity 0.24s ease;
+}
+.modal[hidden] { display: none; }
+.modal.open { opacity: 1; }
+.modal-box {
+  position: relative;
+  width: min(520px, 100%);
+  padding: 22px;
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  background: linear-gradient(160deg, rgba(26, 20, 48, 0.98), rgba(9, 7, 18, 0.99));
+  box-shadow: 0 50px 90px -40px #000, inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transform: translateY(12px) scale(0.99);
+  transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.modal.open .modal-box { transform: none; }
+.modal-box h3 {
+  margin: 0 0 10px;
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  color: var(--gold-2);
+}
+.modal-box p { margin: 0; font-size: 12px; line-height: 1.9; color: var(--muted); }
+.modal-actions { display: flex; justify-content: flex-end; gap: 9px; margin-top: 20px; }
+
+.modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--muted);
+  font-size: 11px;
+  cursor: pointer;
+  z-index: 2;
+}
+.modal-close:hover { color: var(--ink); border-color: var(--line-strong); }
+
+.card-modal-box {
+  display: grid;
+  grid-template-columns: 168px minmax(0, 1fr);
+  gap: 20px;
+  width: min(660px, 100%);
+  align-items: start;
+}
+.card-modal-art svg { display: block; width: 100%; height: auto; border-radius: 10px; }
+.card-modal-info h3 {
+  margin: 0 0 4px;
+  font-size: 22px;
+  letter-spacing: 0.06em;
+}
+.card-modal-info .cm-en { font-size: 11px; color: var(--gold-dim); letter-spacing: 0.14em; font-style: italic; }
+.cm-row { margin-top: 10px; font-size: 11.5px; line-height: 1.8; color: var(--muted); }
+.cm-row b { color: var(--ink); font-weight: 500; }
+.cm-dir { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--gold); font-size: 10.5px; letter-spacing: 0.08em; }
+
+/* Toast */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  z-index: 300;
+  transform: translate(-50%, 16px);
+  padding: 9px 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(226, 193, 124, 0.35);
+  background: rgba(14, 10, 26, 0.95);
+  color: var(--gold-2);
+  font-size: 11.5px;
+  letter-spacing: 0.08em;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.22s ease, transform 0.22s ease;
+  max-width: min(90vw, 520px);
+  text-align: center;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* ---------- 响应式 ---------- */
+@media (max-width: 1180px) {
+  .desk { grid-template-columns: minmax(0, 1fr) 340px; }
+}
+
+@media (max-width: 1080px) {
+  .desk { grid-template-columns: 1fr; }
+  .rail { display: grid; grid-template-columns: 1fr 1fr; align-items: start; }
+  .log-panel { grid-column: 1 / -1; }
+  .tablecloth { width: min(100%, 780px); }
+}
+
+@media (max-width: 860px) {
+  .rail { grid-template-columns: 1fr; }
+  .grid-layout { grid-template-columns: 1fr; }
+  .grid-editor { min-height: 0; }
+  .stage-bar { gap: 4px; }
+  .stage { padding: 4px 7px; font-size: 9.5px; }
+  .sys-title h1 { font-size: 20px; }
+}
+
+@media (max-width: 560px) {
+  .sys-app { padding: 12px 10px 24px; gap: 12px; }
+  .sys-header { gap: 10px; }
+  .sys-brand { gap: 10px; align-items: flex-start; }
+  .sys-sub { display: none; }
+  .stage-bar { width: 100%; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 2px; }
+  .stage { flex: 0 0 auto; }
+  .panel { padding: 12px; border-radius: 13px; }
+  .tablecloth { width: min(100%, 520px); border-radius: 14px; }
+  .table-foot { font-size: 10px; gap: 6px 12px; }
+  .extra-grid { grid-template-columns: 1fr; }
+  .g-card { width: 96px; }
+  .g-art { width: 96px; }
+  .card-modal-box { grid-template-columns: 1fr; }
+  .card-modal-art { width: 140px; margin: 0 auto; }
+  .modal-box { padding: 16px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+
+/* 方向图例 */
+.dir-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px 14px;
+  font-size: 9.5px;
+  letter-spacing: 0.06em;
+  color: rgba(156, 147, 178, 0.75);
+}
+.dir-legend b { font-weight: 500; color: var(--muted); }
+.dir-legend i {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 4px;
+  border-radius: 1px;
+  vertical-align: 1px;
+  font-style: normal;
+}
+.dir-legend .d-u { background: #e2c17c; }
+.dir-legend .d-r { background: #e09280; }
+.dir-legend .d-i { background: #9fb6e8; }
+.dir-legend .d-o { background: #e8c58f; }
+
+
+.rail { align-self: stretch; }
+
+
+/* 手机端细节修正 */
+@media (max-width: 560px) {
+  .sys-brand { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .sys-title h1 { font-size: 17px; letter-spacing: 0.05em; line-height: 1.3; }
+  .stage-bar { flex-wrap: wrap; overflow: visible; gap: 4px; }
+  .stage { font-size: 9px; padding: 3px 6px; }
+  .stage i { width: 14px; height: 14px; font-size: 8px; }
+  .tablecloth { width: 100%; }
+  .grid-layout { grid-template-columns: 1fr; }
+}
+
+
+/* 五个思维按钮的视觉区分 */
+.op-btn[data-op="emotion"] .op-glyph { color: #cbb6ff; border-color: rgba(203, 182, 255, 0.42); background: radial-gradient(circle, rgba(150, 118, 255, 0.16), transparent 72%); }
+.op-btn[data-op="diverge"] .op-glyph { color: #8fe6ef; border-color: rgba(143, 230, 239, 0.4); background: radial-gradient(circle, rgba(72, 190, 205, 0.16), transparent 72%); }
+.op-btn[data-op="converge"] .op-glyph { color: #f2cf95; border-color: rgba(242, 207, 149, 0.4); background: radial-gradient(circle, rgba(214, 158, 74, 0.16), transparent 72%); }
+.op-btn[data-op="advance"] .op-glyph { color: #a8e6b0; border-color: rgba(168, 230, 176, 0.4); background: radial-gradient(circle, rgba(96, 190, 120, 0.16), transparent 72%); }
+.op-btn[data-op="emotion"]:hover:not(:disabled) { border-color: rgba(203, 182, 255, 0.5); }
+.op-btn[data-op="diverge"]:hover:not(:disabled) { border-color: rgba(143, 230, 239, 0.5); }
+.op-btn[data-op="converge"]:hover:not(:disabled) { border-color: rgba(242, 207, 149, 0.5); }
+.op-btn[data-op="advance"]:hover:not(:disabled) { border-color: rgba(168, 230, 176, 0.5); }
+
+
+@media (max-width: 1080px) {
+  .grid-editor { position: static; }
+}
+
+
+/* 混沌操作：更短促、带轻微错峰的抖动，强化"乱"的观感 */
+.cards-layer.is-chaotic .tcard {
+  transition-duration: 0.34s;
+  transition-timing-function: cubic-bezier(0.3, 0.05, 0.25, 1.35);
+  transition-delay: var(--jit-delay, 0s);
+}
+.cards-layer.is-chaotic .tcard-rot {
+  transition-duration: 0.4s;
+  transition-timing-function: cubic-bezier(0.35, 0.1, 0.25, 1.3);
+  transition-delay: var(--jit-delay, 0s);
+}
+
+
+/* ---------- 15×15 等大网格的紧凑显示 ---------- */
+.grid-board.is-dense { gap: 3px; }
+.grid-board.is-dense .gcell { border-radius: 5px; padding: 1px; }
+.grid-board.is-dense .gcell .tag { font-size: 7px; letter-spacing: 0; }
+.grid-board.is-dense .gcell .num { font-size: clamp(10px, 1.15vw, 14px); }
+.grid-board.is-dense .gcell .nm { display: none; }
+
+/* 小屏时网格可横向滚动，避免 15×15 的格子被压得太小 */
+@media (max-width: 1080px) {
+  .grid-scroll { overflow-x: auto; overflow-y: hidden; padding-bottom: 6px; }
+  .grid-frame {
+    min-width: 564px;
+    width: 564px;
+    max-width: none;
+    justify-self: start;
+    margin: 0;
+  }
+  .grid-board { min-width: 540px; }
+  .grid-row-labels {
+    position: sticky;
+    left: 0;
+    z-index: 3;
+    background: rgba(9, 7, 18, 0.94);
+  }
+  .grid-corner {
+    position: sticky;
+    left: 0;
+    z-index: 4;
+    background: rgba(9, 7, 18, 0.94);
+  }
+  .grid-col-labels { min-width: 540px; }
+}
+
+
+/* 洗牌随机化说明 */
+.shuffle-note {
+  margin: 0;
+  text-align: center;
+  font-size: 9.5px;
+  letter-spacing: 0.05em;
+  color: rgba(156, 147, 178, 0.62);
+}
+
+</style>
+</head>
+<body>
+  <div class="sys-app">
+
+    <!-- ============ 顶部 ============ -->
+    <header class="sys-header">
+      <div class="sys-brand">
+        <a class="back-link" href="index.html">← 传统抽牌</a>
+        <div class="sys-title">
+          <h1>空间塔罗 <span>·</span> 思维语法系统</h1>
+          <p class="sys-sub">78 张牌的空间运动 · 四向语义 · 语法网格 · 解读资料导出</p>
+        </div>
+      </div>
+      <nav class="stage-bar" id="stageBar" aria-label="当前阶段">
+        <span class="stage" data-stage="ask"><i>1</i>提问</span>
+        <span class="stage" data-stage="operate"><i>2</i>思维操作</span>
+        <span class="stage" data-stage="draw"><i>3</i>抽牌</span>
+        <span class="stage" data-stage="reveal"><i>4</i>揭示</span>
+        <span class="stage" data-stage="grid"><i>5</i>语法网格</span>
+        <span class="stage" data-stage="export"><i>6</i>解读资料</span>
+      </nav>
+    </header>
+
+    <!-- ============ 问题 ============ -->
+    <section class="panel question-panel">
+      <div class="panel-head">
+        <h2>① 你的问题</h2>
+        <span class="hint">程序只原样保存，不理解、不推断、不改写</span>
+      </div>
+      <textarea id="questionInput" class="question-input" rows="2"
+        placeholder="例如：我关注的这个事物在未来一段时间内会怎样发展？　或者：这件事是否可能出现转折？"></textarea>
+      <details class="extra">
+        <summary>补充信息（可选）</summary>
+        <div class="extra-grid">
+          <label>预测对象<input id="extraSubject" type="text" placeholder="例如：一段关系 / 一个项目"></label>
+          <label>关注时间范围<input id="extraRange" type="text" placeholder="例如：未来三个月"></label>
+          <label class="wide">补充背景<textarea id="extraContext" rows="2" placeholder="任何你希望带入本次解读的背景，可不填"></textarea></label>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============ 桌布 + 控制栏 ============ -->
+    <div class="desk">
+      <section class="panel table-panel">
+        <div class="panel-head">
+          <h2>② 神秘学桌布</h2>
+          <span class="badge" id="tableBadge">78 张牌</span>
+        </div>
+        <div class="table-wrap">
+          <div class="tablecloth" id="tablecloth">
+            <canvas class="cloth-tex" id="clothTex" aria-hidden="true"></canvas>
+            <div class="cloth-frame" aria-hidden="true"></div>
+            <div class="time-axis" id="timeAxis" aria-hidden="true">
+              <span class="ta-label">时间推进</span>
+              <i class="ta-line"></i>
+              <i class="ta-head"></i>
+            </div>
+            <div class="cards-layer" id="cardsLayer"></div>
+            <div class="table-hint" id="tableHint">牌背朝上 · 点击牌背即可选牌</div>
+          </div>
+          <div class="table-foot">
+            <span class="tf-item" id="tableFootHint">点击牌背即可选牌</span>
+            <span class="tf-item">已选 <b id="selCount">0</b> 张</span>
+            <span class="tf-item" id="freezeLabel">牌面方向可编辑</span>
+            <span class="tf-item dir-digest">方向 <span id="dirDigest">—</span></span>
+          </div>
+          <p class="shuffle-note">洗牌 / 初始随机分布只决定抽牌的随机性，不承载语义，不参与解读。</p>
+          <div class="dir-legend">
+            <span><i class="d-u"></i>正向 0°：保留基础寓意</span>
+            <span><i class="d-r"></i>逆向 180°：相反方向</span>
+            <span><i class="d-i"></i>向内 270°：内在 / 回溯</span>
+            <span><i class="d-o"></i>向外 90°：推进 / 显化</span>
+          </div>
+        </div>
+      </section>
+
+      <aside class="rail">
+        <!-- 思维操作 -->
+        <section class="panel op-panel">
+          <div class="panel-head">
+            <h2>③ 思维操作</h2>
+            <span class="hint">每次点击都作用于全部 78 张牌</span>
+          </div>
+          <div class="op-list" id="opButtons">
+            <button class="op-btn" type="button" data-op="emotion">
+              <span class="op-glyph">☾</span>
+              <span class="op-text"><b>心绪 · 欲求</b><small>节奏与累积次数驱动混沌运动</small></span>
+              <span class="op-count" data-count="emotion">0</span>
+            </button>
+            <button class="op-btn" type="button" data-op="diverge">
+              <span class="op-glyph">✺</span>
+              <span class="op-text"><b>发散 · 探索</b><small>牌与牌相互排斥，可能性展开</small></span>
+              <span class="op-count" data-count="diverge">0</span>
+            </button>
+            <button class="op-btn" type="button" data-op="converge">
+              <span class="op-glyph">◈</span>
+              <span class="op-text"><b>皈依 · 实在</b><small>牌与牌相互吸引，形成局部聚集</small></span>
+              <span class="op-count" data-count="converge">0</span>
+            </button>
+            <button class="op-btn op-reverse" type="button" data-op="reverse">
+              <span class="op-glyph">⇅</span>
+              <span class="op-text"><b>反转 · 否定</b><small>全部牌方向整体反转 180°</small></span>
+              <span class="op-count" data-count="reverse">0</span>
+            </button>
+            <button class="op-btn" type="button" data-op="advance">
+              <span class="op-glyph">⇥</span>
+              <span class="op-text"><b>推进 · 演化</b><small>沿时间轴方向共同推进</small></span>
+              <span class="op-count" data-count="advance">0</span>
+            </button>
+          </div>
+
+          <div class="reverse-box" id="reverseBox">
+            <div class="rb-head">
+              <span>反转语义模式</span>
+              <em id="reverseModeName">反向探索</em>
+            </div>
+            <div class="segmented" id="reverseModes" role="radiogroup" aria-label="反转语义模式">
+              <button type="button" data-mode="reverseExplore" class="on" role="radio" aria-checked="true">反向探索</button>
+              <button type="button" data-mode="negate" role="radio" aria-checked="false">否定质疑</button>
+              <button type="button" data-mode="turn" role="radio" aria-checked="false">转折转向</button>
+            </div>
+            <p class="rb-desc" id="reverseModeDesc">探索与原有方向相反的可能性，纳入相反发展方向的考察。</p>
+          </div>
+
+          <div class="rail-actions">
+            <button type="button" class="btn ghost" id="undoBtn" disabled>撤销上一步</button>
+            <button type="button" class="btn ghost danger" id="resetBtn">重新开始</button>
+          </div>
+          <p class="rail-status" id="railStatus">等待操作 · 累计 0 次</p>
+        </section>
+
+        <!-- 抽牌 -->
+        <section class="panel draw-panel">
+          <div class="panel-head">
+            <h2>④ 抽牌</h2>
+            <span class="badge" id="selBadge">0 张</span>
+          </div>
+          <ol class="selection" id="selectionList"></ol>
+          <p class="sel-empty" id="selEmpty">点击桌布上的牌背，按点击顺序抽取。揭示前只显示序号，不显示牌面。</p>
+          <button type="button" class="btn primary wide" id="revealBtn" disabled>预测 / 揭示牌面</button>
+          <button type="button" class="btn ghost wide" id="backToEditBtn" hidden>返回编辑</button>
+        </section>
+
+        <!-- 历史 -->
+        <section class="panel log-panel">
+          <div class="panel-head">
+            <h2>操作历史</h2>
+            <span class="hint" id="eventCount">0 次</span>
+          </div>
+          <ol class="event-list" id="eventLog"></ol>
+        </section>
+      </aside>
+    </div>
+
+    <!-- ============ 已揭示 ============ -->
+    <section class="panel gallery-panel" id="galleryPanel" hidden>
+      <div class="panel-head">
+        <h2>⑤ 已揭示牌面</h2>
+        <span class="hint">方向与位置已冻结 · 点击卡片查看牌义</span>
+      </div>
+      <div class="gallery" id="revealedGallery"></div>
+    </section>
+
+    <!-- ============ 网格 ============ -->
+    <section class="panel grid-panel" id="gridSection" hidden>
+      <div class="panel-head">
+        <h2>⑥ 自定义语法网格</h2>
+        <div class="grid-tools">
+          <span class="legend"><i class="sw main"></i>主干方块 M <i class="sw mod"></i>绿色修饰 G</span>
+          <label class="adv-check"><input type="checkbox" id="allowDup"> 允许重复引用同一张牌</label>
+          <label class="size-field">尺寸
+            <select id="gridSize" aria-label="网格尺寸"></select>
+          </label>
+          <span class="hint" id="gridHint">点击格子进行编辑</span>
+        </div>
+      </div>
+      <div class="grid-status">
+        <p class="grid-ok" id="gridOk">网格为空：至少放置一个主干方块。</p>
+        <ul class="grid-errors" id="gridErrors"></ul>
+      </div>
+      <div class="grid-layout">
+        <div class="grid-scroll">
+        <div class="grid-frame">
+          <div class="grid-corner"></div>
+          <div class="grid-col-labels" id="gridColLabels" aria-hidden="true"></div>
+          <div class="grid-row-labels" id="gridRowLabels" aria-hidden="true"></div>
+          <div class="grid-board" id="gridBoard"></div>
+        </div>
+        </div>
+        <div class="grid-editor" id="gridEditor"></div>
+      </div>
+      <p class="grid-note">主干方块可水平或斜向相连、不可直接上下相邻；绿色方块只能垂直相连并必须挂在主干上。所有校验只提示、不自动修改你的结构。小屏设备可左右滑动查看全部 15 列。</p>
+    </section>
+
+    <!-- ============ 导出 ============ -->
+    <section class="panel export-panel" id="exportSection" hidden>
+      <div class="panel-head">
+        <h2>⑦ 解读资料</h2>
+        <span class="hint" id="exportHint">文本、图片与 JSON 全部来自当前真实状态</span>
+      </div>
+      <div class="export-actions">
+        <button type="button" class="btn primary" id="genBtn">生成解读资料</button>
+        <button type="button" class="btn ghost" id="copyBtn" disabled>复制全部文字</button>
+        <button type="button" class="btn ghost" id="pngBtn" disabled>导出网格 PNG</button>
+        <button type="button" class="btn ghost" id="jsonBtn" disabled>导出完整状态 JSON</button>
+      </div>
+      <pre class="output" id="outputText" tabindex="0">还没有生成资料。在网格编辑完成后点击「生成解读资料」。</pre>
+    </section>
+
+    <footer class="sys-foot">
+      <span>纯前端 · 无需联网 · 不调用任何 AI 接口</span>
+      <span>全部 78 张牌共享同一套卡牌数据模型</span>
+    </footer>
+  </div>
+
+  <!-- 确认弹层 -->
+  <div class="modal" id="confirmModal" role="dialog" aria-modal="true" aria-labelledby="confirmTitle" hidden>
+    <div class="modal-box">
+      <h3 id="confirmTitle">确认操作</h3>
+      <p id="confirmBody"></p>
+      <div class="modal-actions">
+        <button type="button" class="btn ghost" id="confirmCancel">取消</button>
+        <button type="button" class="btn primary" id="confirmOk">确认</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 牌义弹层 -->
+  <div class="modal" id="cardModal" role="dialog" aria-modal="true" aria-labelledby="cardModalTitle" hidden>
+    <div class="modal-box card-modal-box">
+      <button class="modal-close" id="cardModalClose" type="button" aria-label="关闭">✕</button>
+      <div class="card-modal-art" id="cardModalArt"></div>
+      <div class="card-modal-info" id="cardModalInfo"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+/*!
+ * 塔罗牌 · 卡牌数据模型
+ * ---------------------------------------------------------------
+ * 每张牌都是一个 CardModel（由 buildDeck() 组装）：
+ *
+ * {
+ *   uid: 0..77,                  // 牌堆内唯一序号
+ *   id: 'major-0' | 'wands-1' …  // 稳定 id
+ *   arcana: 'major' | 'minor',
+ *   suit: 'wands' | 'cups' | 'swords' | 'pentacles' | null,
+ *   rank: 0..21 (大牌) | 1..14 (小牌),
+ *   rankLabel: 'Ⅶ' | 'A' | '侍' …,
+ *   name: '愚者', en: 'The Fool',
+ *   element: '风', astro: '天王星',
+ *   keywords: { upright: [...], reversed: [...] },
+ *   meaning:  { upright: '…', reversed: '…' },
+ *   palette: 'major' | 'wands' | 'cups' | 'swords' | 'pentacles',
+ *   reversed: 抽牌时随机决定,          // 运行期字段
+ *   position: 抽牌序号                 // 运行期字段
+ * }
+ * ---------------------------------------------------------------
+ */
+(function (global) {
+  'use strict';
+
+  /* 花色：元素、气质与配色 */
+  const SUITS = {
+    wands: {
+      key: 'wands', name: '权杖', en: 'Wands', element: '火', theme: '行动 · 热情 · 创造',
+      hue: 22, accent: '#ff9d5c', ink: '#ffd9a8', line: '#d98a3d',
+      bg: ['#3a160c', '#120705']
+    },
+    cups: {
+      key: 'cups', name: '圣杯', en: 'Cups', element: '水', theme: '情感 · 关系 · 直觉',
+      hue: 190, accent: '#5fd3e0', ink: '#c8f1f7', line: '#3f9fb0',
+      bg: ['#072b38', '#04121a']
+    },
+    swords: {
+      key: 'swords', name: '宝剑', en: 'Swords', element: '风', theme: '思想 · 沟通 · 真相',
+      hue: 205, accent: '#a9c6dd', ink: '#e6f0fa', line: '#8ea8bf',
+      bg: ['#1c2431', '#0a0e15']
+    },
+    pentacles: {
+      key: 'pentacles', name: '星币', en: 'Pentacles', element: '土', theme: '现实 · 金钱 · 身体',
+      hue: 135, accent: '#8fd39a', ink: '#dff3d6', line: '#6f9f7a',
+      bg: ['#0d2a1b', '#050f09']
+    }
+  };
+
+  const MAJOR_STYLE = {
+    key: 'major', name: '大阿卡纳', en: 'Major Arcana', element: '—', theme: '命运 · 原型 · 课题',
+    hue: 262, accent: '#e5c37a', ink: '#f0d9a7', line: '#c9a227',
+    bg: ['#1b1136', '#090614']
+  };
+
+  const ROMAN = ['0', 'Ⅰ', 'Ⅱ', 'Ⅲ', 'Ⅳ', 'Ⅴ', 'Ⅵ', 'Ⅶ', 'Ⅷ', 'Ⅸ', 'Ⅹ', 'Ⅺ',
+    'Ⅻ', 'ⅩⅢ', 'ⅩⅣ', 'ⅩⅤ', 'ⅩⅥ', 'ⅩⅦ', 'ⅩⅧ', 'ⅩⅨ', 'ⅩⅩ', 'ⅩⅪ'];
+
+  /* 22 张大阿卡纳 */
+  const MAJORS = [
+    {
+      n: 0, name: '愚者', en: 'The Fool', glyph: '♅', element: '风', astro: '天王星',
+      up: ['自由', '冒险', '纯真', '起点'], rev: ['鲁莽', '逃避', '迟疑'],
+      upText: '全新开始。放下旧剧本，凭直觉迈出第一步——未知不是威胁，而是尚未展开的可能。',
+      revText: '冲动与迟疑同样危险：要么准备不足就上路，要么被恐惧钉在原地。先看清脚下，再决定跳跃。'
+    },
+    {
+      n: 1, name: '魔术师', en: 'The Magician', glyph: '☿', element: '风', astro: '水星',
+      up: ['创造', '显化', '自信', '行动'], rev: ['操控', '空谈', '才能闲置'],
+      upText: '你已拥有所需的一切工具。让意图与资源对齐，把想法落到行动，此刻正是显化的时机。',
+      revText: '小心自欺与话术：想得多做得少，或用聪明去操控局面。回到基本面，先把一件小事做完。'
+    },
+    {
+      n: 2, name: '女祭司', en: 'The High Priestess', glyph: '☽', element: '水', astro: '月亮',
+      up: ['直觉', '潜意识', '秘密', '静观'], rev: ['忽视直觉', '隐瞒', '情绪阻塞'],
+      upText: '答案不在外面。安静下来，倾听内在微弱而准确的声音；有些事尚未到揭开的时候。',
+      revText: '外界的噪音盖过了你的感受，或有人（包括你自己）在隐瞒什么。回到身体与情绪，重新校准。'
+    },
+    {
+      n: 3, name: '皇后', en: 'The Empress', glyph: '♀', element: '土', astro: '金星',
+      up: ['丰盛', '滋养', '美', '孕育'], rev: ['依赖', '过度付出', '停滞'],
+      upText: '允许自己被滋养，也把滋养给出去。创造力、关系与身体都在生长，慢一点反而更丰盛。',
+      revText: '过度照顾他人而忽略自己，或把人生过成了等待别人给予。先把自己的杯子倒满。'
+    },
+    {
+      n: 4, name: '皇帝', en: 'The Emperor', glyph: '♈', element: '火', astro: '白羊座',
+      up: ['秩序', '权威', '结构', '保护'], rev: ['固执', '控制', '失序'],
+      upText: '建立规则与边界，用纪律守护重要的事。你是自己人生的负责人，稳住局面。',
+      revText: '僵化的权威会反噬：控制欲过强或结构崩塌。学会松手、协商，必要时重建规则。'
+    },
+    {
+      n: 5, name: '教皇', en: 'The Hierophant', glyph: '♉', element: '土', astro: '金牛座',
+      up: ['传统', '信念', '教导', '归属'], rev: ['教条', '叛逆', '形式主义'],
+      upText: '向经验与传统学习，寻找可信赖的导师或体系。共同的信念能把人聚在一起。',
+      revText: '规则已不再适用于你，盲从只是形式。允许自己质疑、走出既定框架，建立自己的信念。'
+    },
+    {
+      n: 6, name: '恋人', en: 'The Lovers', glyph: '♊', element: '风', astro: '双子座',
+      up: ['选择', '结合', '价值观', '真诚'], rev: ['犹豫', '失衡', '诱惑'],
+      upText: '忠于内心的价值去选择，而不是被期待推着走。坦诚会让关系与自我更完整。',
+      revText: '回避选择本身就是一种选择。关系或内在价值出现裂痕，先修补分裂，再谈结合。'
+    },
+    {
+      n: 7, name: '战车', en: 'The Chariot', glyph: '♋', element: '水', astro: '巨蟹座',
+      up: ['意志', '前进', '胜利', '掌控'], rev: ['内耗', '失控', '急躁'],
+      upText: '收拢内心相互拉扯的力量，朝同一个方向前进。纪律与专注会带来突破。',
+      revText: '拉扯太久会翻车。方向没校准就踩油门，只会更快偏航。停下来重新对准目标。'
+    },
+    {
+      n: 8, name: '力量', en: 'Strength', glyph: '♌', element: '火', astro: '狮子座',
+      up: ['勇气', '温柔', '驯服', '耐力'], rev: ['自我怀疑', '压抑', '冲动'],
+      upText: '真正的力量不是压制，而是温柔而坚定地驯服内心的野兽。耐心比蛮力更有效。',
+      revText: '用蛮力对抗恐惧只会两败俱伤。承认脆弱，把自卑与暴躁安顿好，力量才会回来。'
+    },
+    {
+      n: 9, name: '隐士', en: 'The Hermit', glyph: '♍', element: '土', astro: '处女座',
+      up: ['内省', '独处', '智慧', '寻找'], rev: ['孤立', '逃避', '拒绝帮助'],
+      upText: '暂离喧嚣，独自整理内心。答案在独处与自省中慢慢显形，慢就是快。',
+      revText: '独处变成了躲藏。过度封闭会让你错过伸来的手，试着让信任的人靠近。'
+    },
+    {
+      n: 10, name: '命运之轮', en: 'Wheel of Fortune', glyph: '♃', element: '火', astro: '木星',
+      up: ['转机', '循环', '命运', '时机'], rev: ['停滞', '反复', '失控'],
+      upText: '风向正在改变，此刻顺势而为比硬撑更聪明。你正站在周期的转折点上。',
+      revText: '同样的课题又出现了：不是运气差，而是模式没变。调整节奏，等待下一个窗口。'
+    },
+    {
+      n: 11, name: '正义', en: 'Justice', glyph: '♎', element: '风', astro: '天秤座',
+      up: ['公正', '平衡', '因果', '真相'], rev: ['偏颇', '逃避责任', '失衡'],
+      upText: '用事实与公平做判断，做出对得起自己的决定。你得到的，正是你付出的。',
+      revText: '检视自己的双重标准。逃避责任或评判偏颇时，关系与结果都会失衡。'
+    },
+    {
+      n: 12, name: '倒吊人', en: 'The Hanged Man', glyph: '♆', element: '水', astro: '海王星',
+      up: ['暂停', '换位', '牺牲', '顿悟'], rev: ['拖延', '无谓牺牲', '僵持'],
+      upText: '停止用力，换个角度看问题。此刻的等待本身就是行动，放下控制反而看清。',
+      revText: '停滞不等于修行。该放手的别硬扛，该行动的别再等，无谓的牺牲换不来顿悟。'
+    },
+    {
+      n: 13, name: '死神', en: 'Death', glyph: '♏', element: '水', astro: '天蝎座',
+      up: ['结束', '蜕变', '放下', '重生'], rev: ['抗拒改变', '拖泥带水', '恐惧'],
+      upText: '一个阶段正在落幕。允许结束，才有空间迎接新生；蜕变往往从告别开始。',
+      revText: '抓紧旧物只会延长痛苦。明知该结束却迟迟不动，改变会以更疼的方式到来。'
+    },
+    {
+      n: 14, name: '节制', en: 'Temperance', glyph: '♐', element: '火', astro: '射手座',
+      up: ['平衡', '调和', '耐心', '疗愈'], rev: ['失衡', '极端', '急躁'],
+      upText: '在对立之间找到中间道路。调配节奏与资源，慢慢来，才比较快。',
+      revText: '生活配比失衡：过度消耗、极端取舍。别用极端方式解决复杂问题，先恢复平衡。'
+    },
+    {
+      n: 15, name: '恶魔', en: 'The Devil', glyph: '♑', element: '土', astro: '摩羯座',
+      up: ['束缚', '欲望', '执念', '诱惑'], rev: ['挣脱', '觉察', '释放'],
+      upText: '看清让你上瘾的人、事、念头。枷锁多半是自己戴上的，承认欲望才能不被它驱动。',
+      revText: '你正在找回主动权。继续保持觉察，一点点解开旧有的依赖与控制。'
+    },
+    {
+      n: 16, name: '塔', en: 'The Tower', glyph: '♂', element: '火', astro: '火星',
+      up: ['突变', '崩塌', '觉醒', '清理'], rev: ['拖延崩塌', '恐惧变化', '余震'],
+      upText: '意料之外的震荡正在拆除不牢的地基。别急着修补，先看清哪些本就不该存在。',
+      revText: '变化被强行压住了，但迟早会来。与其被动承受，不如主动清理。'
+    },
+    {
+      n: 17, name: '星星', en: 'The Star', glyph: '♒', element: '风', astro: '水瓶座',
+      up: ['希望', '疗愈', '灵感', '信任'], rev: ['失望', '失焦', '自我怀疑'],
+      upText: '风暴之后有光。允许自己相信未来，把伤口交给时间，灵感会回来。',
+      revText: '希望还在，只是被雾遮住。从一件小事重新开始，别急着否定整片星空。'
+    },
+    {
+      n: 18, name: '月亮', en: 'The Moon', glyph: '♓', element: '水', astro: '双鱼座',
+      up: ['潜意识', '幻觉', '不安', '直觉'], rev: ['迷雾散开', '释放恐惧', '真相'],
+      upText: '事情并不像表面那样清晰。别急着下结论，让情绪与梦境给你线索。',
+      revText: '迷雾正在退去，恐惧开始松动。留意那些曾让你不安的直觉，真相正在浮现。'
+    },
+    {
+      n: 19, name: '太阳', en: 'The Sun', glyph: '☉', element: '火', astro: '太阳',
+      up: ['喜悦', '成功', '光明', '活力'], rev: ['短暂低落', '过度乐观', '延迟'],
+      upText: '坦然做自己，好事正在发生。清晰、温暖与生命力回到了你的生活里。',
+      revText: '光被云遮了一下，不代表晴天结束。别用过度的乐观掩盖真实的疲惫。'
+    },
+    {
+      n: 20, name: '审判', en: 'Judgement', glyph: '♇', element: '火', astro: '冥王星',
+      up: ['觉醒', '召唤', '复盘', '重生'], rev: ['自我批判', '逃避召唤', '犹疑'],
+      upText: '回应内心的召唤，为过去做一次清算。宽恕与觉醒之后，你被允许重新开始。',
+      revText: '别困在懊悔与自我批判里。听见了召唤却迟迟不回应，机会会再次敲门。'
+    },
+    {
+      n: 21, name: '世界', en: 'The World', glyph: '♄', element: '土', astro: '土星',
+      up: ['完成', '圆满', '整合', '远行'], rev: ['未竟', '拖延收尾', '差一步'],
+      upText: '一个周期抵达终点。庆祝你走过的路，然后把行囊收好，准备下一段旅程。',
+      revText: '只差最后一里路。别在终点前松手，把收尾做完，闭环才会带来自由。'
+    }
+  ];
+
+  /* 56 张小阿卡纳：14 个序号 × 4 花色
+     [正位关键词, 逆位关键词, 正位牌义, 逆位牌义] */
+  const MINOR_DATA = {
+    wands: [
+      [['灵感', '突破', '行动力'], ['延迟', '乏劲', '错失'],
+        '新的热情与灵感被点燃。抓住那股想做的冲动，立刻开始，火苗需要第一把柴。',
+        '动力被卡住了：计划推迟、兴趣消退。先找回让你心动的那件事，别硬推。'],
+      [['规划', '远见', '抉择'], ['犹豫', '计划落空', '不安于室'],
+        '站在门口向外眺望：世界很大，你已经有了蓝图。做出选择，并为之负责。',
+        '计划悬而未决，或对现状既想离开又不敢。别用「再等等」拖延决定。'],
+      [['拓展', '等待回音', '远行'], ['延误', '视野受限', '收回期待'],
+        '船已出海，格局正在打开。保持耐心，你的远见开始在更大的舞台上兑现。',
+        '进展比预期慢，视野受限。回头检查航线，而不是怀疑整趟旅程。'],
+      [['庆祝', '稳定', '归属'], ['不安定', '庆祝延迟', '根基松动'],
+        '阶段性的安稳与庆祝：回家、扎根、与重要的人共享成果。',
+        '表面安稳下藏着松动：庆祝被推迟，归属感需要重新建立。'],
+      [['竞争', '摩擦', '交锋'], ['内耗', '逃避冲突', '两败俱伤'],
+        '不同的力量互相碰撞。良性竞争能磨出锋芒，别把分歧变成敌对。',
+        '内耗或逃避冲突。把力气收回来，先解决真正的分歧。'],
+      [['胜利', '认可', '凯旋'], ['虚荣', '缺乏认可', '骄傲失衡'],
+        '努力被看见，你正站在聚光灯下。大方接受认可，然后继续向前。',
+        '缺乏认可，或把自我价值全押在别人的掌声上。'],
+      [['坚守', '防御', '立场'], ['力不从心', '放弃阵地', '疲于应付'],
+        '你在守住来之不易的位置。压力虽大，但你有资格站在那里。',
+        '力不从心或过度防备。分清哪些阵地值得守，哪些可以放手。'],
+      [['迅速', '消息', '顺流'], ['延迟', '混乱信息', '节奏被打断'],
+        '事情突然加速，消息与机会接踵而至。顺势推进，别犹豫。',
+        '节奏被打乱：延迟、误会、信息错位。先理清，再出发。'],
+      [['韧性', '坚持', '戒备'], ['疲惫', '过度防备', '独自硬撑'],
+        '你很累，但还没到放弃的时候。守住最后一班岗，韧性会带你过去。',
+        '过度防备或已经耗尽。该求助就求助，别独自硬撑。'],
+      [['重担', '责任', '收尾'], ['压垮', '学会放下', '分摊'],
+        '责任堆得很高，你几乎扛不动了。学会分配与取舍，终点就在前面。',
+        '被压垮，或终于学会放下。承认「我做不完」，是一种成熟。'],
+      [['好奇', '热情', '试水'], ['三分钟热度', '方向不明', '纸上谈兵'],
+        '带着好奇心去试：新点子、新领域、新旅程。热情本身就是燃料。',
+        '热情来得快去得也快。给自己一个具体的下一步，别只停在想象。'],
+      [['冲劲', '冒险', '奔赴'], ['鲁莽', '半途而废', '后劲不足'],
+        '说走就走的行动力。大胆推进，但记得带上方向感。',
+        '太急、太冲、后劲不足。先确认目标，再全速前进。'],
+      [['自信', '魅力', '热情'], ['嫉妒', '自我怀疑', '讨好'],
+        '由内而外的自信与温度。你不需要讨好谁，就足够耀眼。',
+        '把能量拿去比较或怀疑自己。回到自己的火堆旁取暖。'],
+      [['领导', '魄力', '远见'], ['独断', '急躁', '有始无终'],
+        '有远见也有执行力的领导者。用你的愿景点燃别人。',
+        '独断专行或急躁冒进。倾听比命令更能带队伍走远。']
+    ],
+    cups: [
+      [['新的感情', '疗愈', '灵感'], ['情感堵塞', '空虚', '压抑'],
+        '心被打开：新的爱、友谊或创作灵感涌出。允许自己接收。',
+        '情感被压住，付出与接收都不顺畅。先照顾自己的感受。'],
+      [['联结', '互相吸引', '盟约'], ['失衡', '分歧', '冷战'],
+        '两颗心对等地靠近，一段真诚的关系或合作正在形成。',
+        '关系出现失衡或分歧。别急着分开，先把话说开。'],
+      [['友谊', '庆祝', '共享'], ['过度社交', '三角关系', '被排挤'],
+        '与朋友共享喜悦，社群与支持系统正在给你力量。',
+        '社交过度，或关系中出现第三方。把精力留给真正重要的人。'],
+      [['倦怠', '内省', '视而不见'], ['重新行动', '抓住机会', '醒来'],
+        '你有些倦了，对眼前的邀请视而不见。允许自己停一停，但别关上窗。',
+        '从倦怠中醒来，重新伸手接住机会。'],
+      [['失落', '遗憾', '哀悼'], ['走出遗憾', '重新看见', '接受'],
+        '为失去的难过是正常的。但别只盯着打翻的杯子，身后还有满着的。',
+        '哀悼接近尾声，你开始转身看见仍有的一切。'],
+      [['回忆', '纯真', '旧友'], ['困于过去', '长大', '滤镜破碎'],
+        '旧人、旧地、旧时光带来温暖。回忆可以滋养你，但别住在里面。',
+        '困在过去的滤镜里。向前走，不必否定曾经的温柔。'],
+      [['选择', '幻想', '诱惑'], ['清醒', '做出决定', '面对现实'],
+        '选项太多反而迷失。分清幻象与真实，别只做白日梦。',
+        '迷雾散去，你终于能做出决定。'],
+      [['离开', '寻找', '更深的追求'], ['留恋', '不敢走', '半途折返'],
+        '你决定离开已经不够的东西，去寻找真正有意义的。孤独，但值得。',
+        '明知该走却舍不得。问问自己：留下是爱，还是害怕改变？'],
+      [['满足', '愿望成真', '享受'], ['表面满足', '贪求', '不满足'],
+        '愿望成真，享受此刻的满足。你值得这份丰盛。',
+        '表面的满足掩盖了空洞，或欲求没有尽头。找回真正的想要。'],
+      [['圆满', '家庭', '幸福'], ['理想破灭', '家庭张力', '疏离'],
+        '情感的圆满：家庭、伴侣、归属感像彩虹一样完整。',
+        '理想化的幸福出现裂缝。真实的关系需要沟通，而不是完美。'],
+      [['敏感', '直觉', '浪漫'], ['情绪化', '逃避', '幼稚'],
+        '柔软而敏感的心，直觉准确。用温柔的方式表达你的感受。',
+        '情绪化或逃避现实。把感受写下来，别用幻想代替行动。'],
+      [['追求', '浪漫', '真诚'], ['空头承诺', '情绪化', '忽冷忽热'],
+        '带着真心去追求所爱，浪漫而优雅地靠近。',
+        '说得比做得好，或被情绪牵着走。让承诺落到行动上。'],
+      [['共情', '温柔', '直觉'], ['情绪淹没', '讨好', '失去边界'],
+        '深刻的共情与直觉。你的温柔有力量，别失去边界。',
+        '被他人的情绪淹没，或用讨好换取安全感。先回到自己。'],
+      [['成熟情感', '包容', '稳定'], ['情绪操控', '压抑', '冷淡'],
+        '情绪成熟而稳定，能在风浪中保持温和的掌控。',
+        '压抑情感，或有人用情绪操控局面。诚实面对感受。']
+    ],
+    swords: [
+      [['真相', '决断', '清晰'], ['混乱', '犹豫', '伤人言语'],
+        '一道清晰的光划开迷雾：真相浮现，你终于能做出决断。',
+        '思绪混乱、言语伤人，或真相被扭曲。先冷静，再开口。'],
+      [['僵局', '权衡', '回避'], ['打破僵局', '面对', '做出选择'],
+        '你在两个选择之间僵住，用回避换取暂时的平静。',
+        '眼罩被摘下，僵局需要被打破，面对比回避更省力。'],
+      [['伤心', '分离', '刺痛'], ['疗愈开始', '释放', '看清'],
+        '被刺痛的真相或分离让人难受。允许自己流血，也允许自己愈合。',
+        '最痛的时刻正在过去，放下与疗愈开始。'],
+      [['休息', '恢复', '沉淀'], ['焦虑', '难以停下', '积压'],
+        '暂停、休息、养伤。此刻不动，是为了走更长的路。',
+        '想停却停不下来，焦虑驱使你过度运转。'],
+      [['冲突', '得失', '争执'], ['和解', '放下争胜', '退出战场'],
+        '一场争执里没有真正的赢家。想清楚你要的是「对」，还是关系。',
+        '放下争胜，和解的可能开始出现。'],
+      [['过渡', '离开', '平静'], ['卡在原地', '未解决的伤', '拖延'],
+        '离开动荡的水面，向平静前行。这是一段必要的过渡。',
+        '船没有开动，伤口也没处理。旧问题还在原地等你。'],
+      [['策略', '隐瞒', '取巧'], ['坦白', '被揭穿', '自食其果'],
+        '用策略与智慧脱身，但也提醒：取巧只能解决一时。',
+        '隐瞒将被揭穿，或你决定坦白。'],
+      [['受限', '自我设限', '恐惧'], ['松绑', '看见出口', '行动起来'],
+        '你感觉被困住了，但很多绳索是自己绑的。看清它，就能解开。',
+        '松绑的时刻到了。恐惧减弱，出口就在眼前。'],
+      [['焦虑', '失眠', '内耗'], ['释放', '求助', '天亮'],
+        '深夜的焦虑与自我折磨。白天想象的灾难，多半不会发生。',
+        '开始把恐惧说出口，释放与求助让夜变短。'],
+      [['终结', '触底', '剧痛'], ['复原', '重生', '直到尽头'],
+        '一种结束，触底般的痛。但剑已到头，接下来只能向上。',
+        '伤口开始结痂，复原正在发生。'],
+      [['敏锐', '好奇', '观察'], ['口舌', '多疑', '信息失真'],
+        '头脑敏锐、好奇心强，适合学习、调查与提问。',
+        '多疑、嘴快或信息失真。先核实，再传播。'],
+      [['果断', '冲刺', '直率'], ['冒进', '言语伤人', '横冲直撞'],
+        '目标明确、行动果断，一往无前地冲过障碍。',
+        '鲁莽与言语锋利伤了人。快是优点，但别伤人。'],
+      [['清醒', '独立', '边界'], ['冷漠', '苛刻', '封闭'],
+        '清醒、独立、有边界。用理性保护你所珍视的东西。',
+        '过于冷漠或苛刻，理性变成了墙。'],
+      [['理性', '权威', '公正'], ['冷酷', '控制', '语言霸权'],
+        '以理性与原则做决定的权威。你的判断值得信赖。',
+        '冷酷、控制或语言霸权。理性也需要温度。']
+    ],
+    pentacles: [
+      [['机会', '种子', '实质开始'], ['错失', '计划落空', '基础不稳'],
+        '现实层面的新机会：一份工作、一笔收入、一件值得投入的事。把种子种下。',
+        '机会溜走或基础不稳。先检查土壤，再谈播种。'],
+      [['平衡', '多线', '灵活'], ['顾此失彼', '混乱', '透支'],
+        '在多项事务之间灵活平衡。节奏感比蛮力更重要。',
+        '事情太多顾此失彼。该断舍离就断舍离。'],
+      [['协作', '专业', '打磨'], ['配合不佳', '敷衍', '标准松散'],
+        '与专业的人协作，把作品打磨到更好。你被看见的能力正在增值。',
+        '配合不佳或敷衍了事。重建分工与标准。'],
+      [['保守', '储蓄', '掌控'], ['吝啬', '放手', '恐惧失去'],
+        '守住已有的资源，稳稳积累。安全感来自掌控感。',
+        '抓得太紧会变成吝啬与恐惧。适度流动，财富才是活的。'],
+      [['匮乏', '困境', '孤立'], ['转机', '得到帮助', '走出低谷'],
+        '物质或健康的困境让人孤立，但请抬头——帮助其实就在旁边。',
+        '困境松动，援助到来，你开始走出低谷。'],
+      [['给予', '接受', '公平交换'], ['失衡', '施与受', '亏欠'],
+        '给予与接受保持流动。慷慨会以另一种方式回来。',
+        '施与受失去平衡：被施舍，或给到耗空。'],
+      [['耐心', '投入', '等待收成'], ['焦躁', '白费', '方向要修正'],
+        '播下的种子需要时间。评估投入，然后耐心等待收成。',
+        '焦躁让你想放弃，或投入的方向需要修正。'],
+      [['专注', '精进', '手艺'], ['重复', '敷衍', '机械'],
+        '沉下心打磨技艺。日复一日的专注，正在把你变成专家。',
+        '重复到麻木，或敷衍应付。找回手艺里的意义。'],
+      [['独立', '丰足', '享受成果'], ['过度依赖', '虚荣', '挥霍'],
+        '独立自足，享受努力换来的丰盛与自由。',
+        '看似富足却依赖他人，或用物质填补不安。'],
+      [['家业', '稳固', '传承'], ['家庭纠纷', '短视', '根基动摇'],
+        '稳固的根基、家业与长期回报。你正在建造能传下去的东西。',
+        '家庭或财务结构的问题需要处理。别为眼前利益动摇根基。'],
+      [['学习', '踏实', '新机会'], ['拖延', '不切实际', '眼高手低'],
+        '踏实学习、认真开始。愿意下笨功夫的人走得最远。',
+        '拖延或眼高手低。从最小的一步开始动手。'],
+      [['稳健', '可靠', '执行'], ['停滞', '固执', '重复'],
+        '不张扬但可靠，一步一步把事做完。这就是最有效的天赋。',
+        '过于保守、停滞不前。稳定不等于原地不动。'],
+      [['务实', '滋养', '安全'], ['忽视自己', '焦虑', '过度操心'],
+        '务实的照顾者：把生活和身边人安顿得妥妥当当。',
+        '照顾了所有人，唯独忘了自己。先给自己留一口气。'],
+      [['成就', '财富', '稳重'], ['固执', '物质至上', '失去弹性'],
+        '世俗意义上的成就与稳定。你有能力把想法变成可持续的现实。',
+        '固执或只用金钱衡量一切。成功之外，别忘了为什么出发。']
+    ]
+  };
+
+  const RANKS = [
+    { r: 1, label: 'A', en: 'Ace' },
+    { r: 2, label: '2', en: 'Two' },
+    { r: 3, label: '3', en: 'Three' },
+    { r: 4, label: '4', en: 'Four' },
+    { r: 5, label: '5', en: 'Five' },
+    { r: 6, label: '6', en: 'Six' },
+    { r: 7, label: '7', en: 'Seven' },
+    { r: 8, label: '8', en: 'Eight' },
+    { r: 9, label: '9', en: 'Nine' },
+    { r: 10, label: '10', en: 'Ten' },
+    { r: 11, label: '侍', en: 'Page', zh: '侍从' },
+    { r: 12, label: '骑', en: 'Knight', zh: '骑士' },
+    { r: 13, label: '后', en: 'Queen', zh: '王后' },
+    { r: 14, label: '王', en: 'King', zh: '国王' }
+  ];
+
+  const CN_NUM = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
+
+  function buildDeck() {
+    const deck = [];
+
+    MAJORS.forEach(function (m) {
+      deck.push({
+        uid: deck.length,
+        id: 'major-' + m.n,
+        arcana: 'major',
+        suit: null,
+        rank: m.n,
+        rankLabel: ROMAN[m.n],
+        name: m.name,
+        en: m.en,
+        glyph: m.glyph,
+        element: m.element,
+        astro: m.astro,
+        keywords: { upright: m.up.slice(), reversed: m.rev.slice() },
+        meaning: { upright: m.upText, reversed: m.revText },
+        palette: 'major'
+      });
+    });
+
+    ['wands', 'cups', 'swords', 'pentacles'].forEach(function (suitKey) {
+      const suit = SUITS[suitKey];
+      MINOR_DATA[suitKey].forEach(function (row, i) {
+        const rank = RANKS[i];
+        const name = rank.r === 1
+          ? suit.name + '首牌'
+          : rank.r <= 10
+            ? suit.name + CN_NUM[rank.r]
+            : suit.name + rank.zh;
+        const en = (rank.r === 1 ? 'Ace' : rank.r <= 10 ? RANKS[rank.r - 1].en : rank.en) + ' of ' + suit.en;
+        deck.push({
+          uid: deck.length,
+          id: suitKey + '-' + rank.r,
+          arcana: 'minor',
+          suit: suitKey,
+          rank: rank.r,
+          rankLabel: rank.label,
+          name: name,
+          en: en,
+          glyph: null,
+          element: suit.element,
+          astro: suit.theme,
+          keywords: { upright: row[0].slice(), reversed: row[1].slice() },
+          meaning: { upright: row[2], reversed: row[3] },
+          palette: suitKey
+        });
+      });
+    });
+
+    return deck;
+  }
+
+  const DECK = buildDeck();
+  const BY_ID = {};
+  DECK.forEach(function (c) { BY_ID[c.id] = c; });
+
+  global.TAROT = {
+    SUITS: SUITS,
+    MAJOR_STYLE: MAJOR_STYLE,
+    MAJORS: MAJORS,
+    RANKS: RANKS,
+    ROMAN: ROMAN,
+    DECK: DECK,
+    BY_ID: BY_ID,
+    palette: function (card) {
+      return card.palette === 'major' ? MAJOR_STYLE : SUITS[card.palette];
+    }
+  };
+})(window);
+
+</script>
+  <script>
+/*!
+ * 塔罗牌 · 程序化牌面生成（经典抽牌页与空间塔罗系统共用）
+ * 对外暴露 window.TAROT_ART.face(card) / .back()
+ */
+(function () {
+  "use strict";
+
+  const T = window.TAROT;
+  const FONT_SERIF = "'Cormorant Garamond','Baskerville','Georgia','Songti SC','STSong','SimSun',serif";
+  const FONT_SYMBOL = "'Segoe UI Symbol','Noto Sans Symbols 2','Apple Symbols','Times New Roman',serif";
+
+  let svgSeq = 0;
+
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function hash(str) {
+    let h = 2166136261 >>> 0;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return h >>> 0;
+  }
+
+  /* ============================================================
+   * 2. 牌面 SVG 生成
+   * ========================================================== */
+
+  function starPoints(cx, cy, outer, inner, n, rot) {
+    const pts = [];
+    for (let i = 0; i < n * 2; i++) {
+      const r = i % 2 ? inner : outer;
+      const a = (Math.PI * i) / n + (rot || 0);
+      pts.push((cx + Math.cos(a) * r).toFixed(2) + ',' + (cy + Math.sin(a) * r).toFixed(2));
+    }
+    return pts.join(' ');
+  }
+
+  function polygon(cx, cy, r, n, rot) {
+    const pts = [];
+    for (let i = 0; i < n; i++) {
+      const a = (Math.PI * 2 * i) / n + (rot || 0);
+      pts.push((cx + Math.cos(a) * r).toFixed(2) + ',' + (cy + Math.sin(a) * r).toFixed(2));
+    }
+    return pts.join(' ');
+  }
+
+  /* 花色符号：权杖 / 圣杯 / 宝剑 / 星币，绘制在 0..100 的方框内 */
+  function suitMarkup(suit, ink, accent, line) {
+    const grad = 'url(#' + line + ')';
+    if (suit === 'wands') {
+      return '<g stroke-linecap="round" stroke-linejoin="round">' +
+        '<path d="M50 94 L50 30" stroke="' + ink + '" stroke-width="6.5"/>' +
+        '<path d="M50 30 C41 23 41 12 50 5 C59 12 59 23 50 30 Z" fill="' + accent + '"/>' +
+        '<path d="M50 65 C40 61 34 54 32 46" stroke="' + ink + '" stroke-width="3.6" fill="none"/>' +
+        '<path d="M50 74 C60 70 66 63 68 55" stroke="' + ink + '" stroke-width="3.6" fill="none"/>' +
+        '<circle cx="50" cy="90" r="5" fill="' + accent + '"/>' +
+        '<path d="M50 65 C43 63 40 58 39 53" stroke="' + accent + '" stroke-width="2" fill="none" opacity=".85"/>' +
+        '</g>';
+    }
+    if (suit === 'cups') {
+      return '<g stroke-linecap="round" stroke-linejoin="round">' +
+        '<path d="M27 20 H73 V36 C73 54 63 64 50 64 C37 64 27 54 27 36 Z" fill="' + ink + '" fill-opacity=".14" stroke="' + ink + '" stroke-width="3.4"/>' +
+        '<path d="M27 24 H73" stroke="' + accent + '" stroke-width="3"/>' +
+        '<path d="M50 64 V82" stroke="' + ink + '" stroke-width="5"/>' +
+        '<path d="M33 89 H67" stroke="' + ink + '" stroke-width="6"/>' +
+        '<circle cx="50" cy="38" r="4.5" fill="' + accent + '" opacity=".9"/>' +
+        '</g>';
+    }
+    if (suit === 'swords') {
+      return '<g stroke-linecap="round" stroke-linejoin="round">' +
+        '<path d="M50 5 L59 23 V59 H41 V23 Z" fill="' + ink + '"/>' +
+        '<path d="M50 9 V56" stroke="' + line + '" stroke-width="1.6" opacity=".75"/>' +
+        '<rect x="30" y="59" width="40" height="7" rx="3.5" fill="' + accent + '"/>' +
+        '<path d="M50 66 V86" stroke="' + ink + '" stroke-width="5.5"/>' +
+        '<circle cx="50" cy="91" r="5" fill="' + accent + '"/>' +
+        '</g>';
+    }
+    /* pentacles */
+    return '<g stroke-linejoin="round">' +
+      '<circle cx="50" cy="50" r="42" fill="none" stroke="' + ink + '" stroke-width="4"/>' +
+      '<circle cx="50" cy="50" r="35" fill="none" stroke="' + accent + '" stroke-width="1.1" opacity=".7"/>' +
+      '<polygon points="' + starPoints(50, 50, 30, 11.5, 5, -Math.PI / 2) + '" fill="none" stroke="' + accent + '" stroke-width="2.6"/>' +
+      '</g>';
+  }
+
+  function crownMarkup(ink, accent) {
+    return '<g stroke-linejoin="round" stroke-linecap="round">' +
+      '<path d="M30 34 L36 14 L50 27 L64 14 L70 34 Z" fill="' + accent + '" fill-opacity=".22" stroke="' + ink + '" stroke-width="2.4"/>' +
+      '<circle cx="36" cy="14" r="2.6" fill="' + accent + '"/>' +
+      '<circle cx="50" cy="27" r="2.6" fill="' + accent + '"/>' +
+      '<circle cx="64" cy="14" r="2.6" fill="' + accent + '"/>' +
+      '<path d="M30 40 H70" stroke="' + ink + '" stroke-width="1.4" opacity=".6"/>' +
+      '</g>';
+  }
+
+  /* 背景：星点 + 星座连线 + 曼陀罗环 + 柔光 */
+  function backdropMarkup(seed, ink, accent, line) {
+    const rnd = mulberry32(seed);
+    let s = '<g>';
+
+    s += '<circle cx="100" cy="162" r="118" fill="url(#__GLOW__)"/>';
+
+    /* 曼陀罗环 */
+    const rings = 2 + Math.floor(rnd() * 2);
+    for (let r = 0; r < rings; r++) {
+      const rad = 42 + r * 22 + rnd() * 8;
+      s += '<circle cx="100" cy="162" r="' + rad.toFixed(1) + '" fill="none" stroke="' + line +
+        '" stroke-opacity="' + (0.18 - r * 0.045).toFixed(2) + '" stroke-width="' + (rnd() < 0.5 ? 0.8 : 1.3) + '"' +
+        (rnd() < 0.4 ? ' stroke-dasharray="2 6"' : '') + '/>';
+    }
+
+    /* 射线 */
+    const rays = 8 + Math.floor(rnd() * 7);
+    for (let i = 0; i < rays; i++) {
+      const a = (i / rays) * Math.PI * 2 + rnd() * 0.12;
+      const r1 = 104 + rnd() * 8;
+      const r2 = r1 + 5 + rnd() * 16;
+      s += '<line x1="' + (100 + Math.cos(a) * r1).toFixed(1) + '" y1="' + (162 + Math.sin(a) * r1).toFixed(1) +
+        '" x2="' + (100 + Math.cos(a) * r2).toFixed(1) + '" y2="' + (162 + Math.sin(a) * r2).toFixed(1) +
+        '" stroke="' + line + '" stroke-opacity=".28" stroke-width=".9"/>';
+    }
+
+    /* 星座 */
+    const count = 6 + Math.floor(rnd() * 4);
+    const pts = [];
+    for (let i = 0; i < count; i++) {
+      const a = rnd() * Math.PI * 2;
+      const rad = 24 + rnd() * 62;
+      pts.push([100 + Math.cos(a) * rad, 162 + Math.sin(a) * rad * 1.08]);
+    }
+    let path = '';
+    pts.forEach(function (p, i) { path += (i ? ' L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1); });
+    s += '<path d="' + path + '" fill="none" stroke="' + accent + '" stroke-opacity=".16" stroke-width=".9"/>';
+    pts.forEach(function (p) {
+      s += '<circle cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="' + (0.9 + rnd() * 1.3).toFixed(1) +
+        '" fill="' + ink + '" fill-opacity=".55"/>';
+    });
+
+    /* 星尘 */
+    const dust = 22 + Math.floor(rnd() * 16);
+    for (let i = 0; i < dust; i++) {
+      const x = 16 + rnd() * 168;
+      const y = 60 + rnd() * 200;
+      s += '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + (0.4 + rnd() * 0.8).toFixed(2) +
+        '" fill="' + ink + '" fill-opacity="' + (0.1 + rnd() * 0.35).toFixed(2) + '"/>';
+    }
+
+    return s + '</g>';
+  }
+
+  function frameMarkup(ink, accent, line) {
+    const corner = function (x, y, sx, sy) {
+      return '<path d="M' + x + ' ' + (y + 22 * sy) + ' Q' + x + ' ' + y + ' ' + (x + 22 * sx) + ' ' + y +
+        '" fill="none" stroke="' + accent + '" stroke-opacity=".75" stroke-width="1.2" stroke-linecap="round"/>' +
+        '<circle cx="' + (x + 7 * sx) + '" cy="' + (y + 7 * sy) + '" r="1.5" fill="' + accent + '" fill-opacity=".9"/>';
+    };
+    return '<rect x="3.5" y="3.5" width="193" height="327" rx="13" fill="none" stroke="' + line + '" stroke-width="2.2"/>' +
+      '<rect x="9.5" y="9.5" width="181" height="315" rx="9" fill="none" stroke="' + accent + '" stroke-opacity=".55" stroke-width=".9"/>' +
+      corner(18, 18, 1, 1) + corner(182, 18, -1, 1) + corner(18, 316, 1, -1) + corner(182, 316, -1, -1);
+  }
+
+  /* 生成一张牌的牌面（SVG 字符串） */
+  function cardFaceSVG(card) {
+    const pal = T.palette(card);
+    const ink = pal.ink, accent = pal.accent, line = pal.line;
+    const uid = 'f' + (svgSeq++);
+    const seed = hash(card.id);
+    const isMajor = card.arcana === 'major';
+    const isCourt = !isMajor && card.rank > 10;
+
+    let art = '';
+    if (isMajor) {
+      art = '<g>' +
+        '<circle cx="100" cy="158" r="62" fill="none" stroke="' + accent + '" stroke-opacity=".35" stroke-width="1"/>' +
+        '<circle cx="100" cy="158" r="56" fill="none" stroke="' + accent + '" stroke-opacity=".18" stroke-width=".8" stroke-dasharray="1 7"/>' +
+        '<text x="100" y="158" text-anchor="middle" dominant-baseline="central" font-family="' + FONT_SYMBOL +
+        '" font-size="96" fill="url(#' + uid + 'gold)" filter="url(#' + uid + 'blur)">' + card.glyph + '</text>' +
+        '<text x="100" y="158" text-anchor="middle" dominant-baseline="central" font-family="' + FONT_SYMBOL +
+        '" font-size="96" fill="url(#' + uid + 'gold)">' + card.glyph + '</text>' +
+        '<circle cx="100" cy="86" r="2" fill="' + accent + '"/>' +
+        '<circle cx="100" cy="230" r="2" fill="' + accent + '"/>' +
+        '<circle cx="52" cy="158" r="2" fill="' + accent + '"/>' +
+        '<circle cx="148" cy="158" r="2" fill="' + accent + '"/>' +
+        '</g>';
+    } else if (isCourt) {
+      art = '<g>' +
+        '<circle cx="100" cy="178" r="66" fill="none" stroke="' + accent + '" stroke-opacity=".35" stroke-width="1"/>' +
+        '<polygon points="' + polygon(100, 178, 78, 4, Math.PI / 4) + '" fill="none" stroke="' + accent + '" stroke-opacity=".2" stroke-width=".9"/>' +
+        '<g transform="translate(100 178) translate(-52 -52) scale(1.04)">' + suitMarkup(card.suit, ink, accent, line) + '</g>' +
+        '<g transform="translate(100 96) translate(-50 -22) scale(0.62)">' + crownMarkup(ink, accent) + '</g>' +
+        '</g>';
+    } else {
+      art = '<g>' + pipMarkup(card, ink, accent, line) + '</g>';
+    }
+
+    const numeral = isMajor ? card.rankLabel : card.rankLabel;
+
+    return '<svg class="art" viewBox="0 0 200 334" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+      '<defs>' +
+      '<linearGradient id="' + uid + 'bg" x1="0" y1="0" x2=".45" y2="1">' +
+      '<stop offset="0" stop-color="' + pal.bg[0] + '"/><stop offset="1" stop-color="' + pal.bg[1] + '"/></linearGradient>' +
+      '<radialGradient id="' + uid + 'glow" cx=".5" cy=".42" r=".55">' +
+      '<stop offset="0" stop-color="' + accent + '" stop-opacity=".3"/>' +
+      '<stop offset=".62" stop-color="' + accent + '" stop-opacity=".06"/>' +
+      '<stop offset="1" stop-color="' + accent + '" stop-opacity="0"/></radialGradient>' +
+      '<linearGradient id="' + uid + 'gold" x1="0" y1="0" x2=".3" y2="1">' +
+      '<stop offset="0" stop-color="' + ink + '"/><stop offset=".55" stop-color="' + accent + '"/><stop offset="1" stop-color="' + line + '"/></linearGradient>' +
+      '<filter id="' + uid + 'blur" x="-40%" y="-40%" width="180%" height="180%">' +
+      '<feGaussianBlur stdDeviation="4.5"/></filter>' +
+      '</defs>' +
+      '<rect x="0" y="0" width="200" height="334" rx="13" fill="url(#' + uid + 'bg)"/>' +
+      backdropMarkup(seed, ink, accent, line).replace('__GLOW__', uid + 'glow') +
+      '<rect x="0" y="0" width="200" height="334" rx="13" fill="url(#' + uid + 'glow)" opacity=".55"/>' +
+      /* 顶部序号 */
+      '<text x="100" y="45" text-anchor="middle" font-family="' + FONT_SERIF + '" font-size="17" letter-spacing="2.5" fill="' + accent + '">' + numeral + '</text>' +
+      '<line x1="52" y1="54" x2="80" y2="54" stroke="' + line + '" stroke-opacity=".6" stroke-width=".8"/>' +
+      '<line x1="120" y1="54" x2="148" y2="54" stroke="' + line + '" stroke-opacity=".6" stroke-width=".8"/>' +
+      '<circle cx="100" cy="54" r="1.7" fill="' + accent + '"/>' +
+      art +
+      /* 底部名称 */
+      '<line x1="72" y1="270" x2="128" y2="270" stroke="' + accent + '" stroke-opacity=".45" stroke-width=".9"/>' +
+      '<circle cx="100" cy="270" r="1.6" fill="' + accent + '" fill-opacity=".8"/>' +
+      '<text x="100" y="295" text-anchor="middle" font-family="' + FONT_SERIF + '" font-size="18.5" fill="' + ink + '" letter-spacing="1.5">' + card.name + '</text>' +
+      '<text x="100" y="314" text-anchor="middle" font-family="' + FONT_SERIF + '" font-size="8" fill="' + accent + '" fill-opacity=".85" letter-spacing="1.4">' + card.en.toUpperCase() + '</text>' +
+      frameMarkup(ink, accent, line) +
+      '</svg>';
+  }
+
+  const PIP_POS = {
+    1: [[100, 162]],
+    2: [[100, 112], [100, 212]],
+    3: [[100, 104], [68, 224], [132, 224]],
+    4: [[70, 116], [130, 116], [70, 208], [130, 208]],
+    5: [[68, 104], [132, 104], [100, 162], [68, 220], [132, 220]],
+    6: [[74, 100], [126, 100], [74, 162], [126, 162], [74, 224], [126, 224]],
+    7: [[66, 96], [100, 96], [134, 96], [100, 158], [66, 228], [100, 228], [134, 228]],
+    8: [[74, 90], [126, 90], [74, 138], [126, 138], [74, 186], [126, 186], [74, 234], [126, 234]],
+    9: [[66, 96], [100, 96], [134, 96], [66, 162], [100, 162], [134, 162], [66, 228], [100, 228], [134, 228]],
+    10: [[58, 96], [86, 96], [114, 96], [142, 96], [86, 162], [114, 162], [58, 228], [86, 228], [114, 228], [142, 228]]
+  };
+  const PIP_SIZE = { 1: 92, 2: 62, 3: 54, 4: 50, 5: 44, 6: 40, 7: 32, 8: 34, 9: 30, 10: 26 };
+
+  function pipMarkup(card, ink, accent, line) {
+    const pos = PIP_POS[card.rank];
+    const size = PIP_SIZE[card.rank];
+    const icon = suitMarkup(card.suit, ink, accent, line);
+    let s = '';
+    /* 中央柔光 */
+    s += '<circle cx="100" cy="162" r="76" fill="' + accent + '" fill-opacity=".045"/>';
+    pos.forEach(function (p) {
+      s += '<g transform="translate(' + (p[0] - size / 2) + ' ' + (p[1] - size / 2) + ') scale(' + (size / 100) + ')" opacity=".95">' + icon + '</g>';
+    });
+    return s;
+  }
+
+  /* 牌背 */
+  function cardBackSVG() {
+    const uid = 'b' + (svgSeq++);
+    const gold = '#d9b45b';
+    const goldLight = '#f0d9a7';
+    let s = '<svg class="art" viewBox="0 0 200 334" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+      '<defs>' +
+      '<linearGradient id="' + uid + 'bg" x1="0" y1="0" x2=".5" y2="1">' +
+      '<stop offset="0" stop-color="#191340"/><stop offset=".55" stop-color="#0d0a24"/><stop offset="1" stop-color="#06040f"/></linearGradient>' +
+      '<linearGradient id="' + uid + 'g" x1="0" y1="0" x2=".6" y2="1">' +
+      '<stop offset="0" stop-color="' + goldLight + '"/><stop offset=".5" stop-color="' + gold + '"/><stop offset="1" stop-color="#8f6d2c"/></linearGradient>' +
+      '<radialGradient id="' + uid + 'r" cx=".5" cy=".45" r=".5">' +
+      '<stop offset="0" stop-color="' + gold + '" stop-opacity=".22"/>' +
+      '<stop offset="1" stop-color="' + gold + '" stop-opacity="0"/></radialGradient>' +
+      '</defs>' +
+      '<rect x="0" y="0" width="200" height="334" rx="13" fill="url(#' + uid + 'bg)"/>' +
+      '<rect x="3.5" y="3.5" width="193" height="327" rx="13" fill="none" stroke="url(#' + uid + 'g)" stroke-width="2"/>' +
+      '<rect x="10" y="10" width="180" height="314" rx="9" fill="none" stroke="' + gold + '" stroke-opacity=".45" stroke-width=".8"/>' +
+      '<circle cx="100" cy="167" r="96" fill="url(#' + uid + 'r)"/>' +
+      /* 内框斜纹 */
+      '<g stroke="' + gold + '" stroke-opacity=".1" stroke-width=".8">' +
+      '<path d="M20 20 L180 180 M20 60 L180 220 M20 100 L180 260 M20 140 L180 300"/>' +
+      '<path d="M180 20 L20 180 M180 60 L20 220 M180 100 L20 260 M180 140 L20 300"/>' +
+      '</g>' +
+      /* 中央曼陀罗 */
+      '<circle cx="100" cy="167" r="62" fill="none" stroke="url(#' + uid + 'g)" stroke-width="1.2"/>' +
+      '<circle cx="100" cy="167" r="55" fill="none" stroke="' + gold + '" stroke-opacity=".4" stroke-width=".8" stroke-dasharray="1.5 5"/>' +
+      '<polygon points="' + starPoints(100, 167, 50, 20, 8, -Math.PI / 2) + '" fill="none" stroke="url(#' + uid + 'g)" stroke-width="1.4"/>' +
+      '<circle cx="100" cy="167" r="20" fill="#080516" stroke="' + gold + '" stroke-opacity=".6" stroke-width="1"/>' +
+      /* 月牙 + 星 */
+      '<path d="M104 156 A11 11 0 1 0 104 178 A9 9 0 1 1 104 156 Z" fill="' + goldLight + '" fill-opacity=".9"/>' +
+      '<path d="' + starPoints(112, 154, 4.6, 1.7, 4, 0).replace(/^/, 'M').replace(/,/g, ' ') + '" fill="' + goldLight + '"/>' +
+      /* 外圈点 */
+      (function () {
+        let dots = '';
+        for (let i = 0; i < 24; i++) {
+          const a = (Math.PI * 2 * i) / 24;
+          dots += '<circle cx="' + (100 + Math.cos(a) * 68).toFixed(1) + '" cy="' + (167 + Math.sin(a) * 68).toFixed(1) + '" r="1.1" fill="' + gold + '" fill-opacity=".55"/>';
+        }
+        return dots;
+      })() +
+      /* 四角小花 */
+      (function () {
+        let c = '';
+        [[26, 26], [174, 26], [26, 308], [174, 308]].forEach(function (p) {
+          c += '<circle cx="' + p[0] + '" cy="' + p[1] + '" r="3.4" fill="none" stroke="' + gold + '" stroke-opacity=".55" stroke-width=".9"/>' +
+            '<circle cx="' + p[0] + '" cy="' + p[1] + '" r="1.1" fill="' + gold + '" fill-opacity=".8"/>';
+        });
+        return c;
+      })() +
+      '</svg>';
+    return s;
+  }
+
+  window.TAROT_ART = {
+    face: cardFaceSVG,
+    back: cardBackSVG,
+    starPoints: starPoints,
+    polygon: polygon
+  };
+})();
+
+</script>
+  <script>
+/*!
+ * 空间塔罗 · 思维语法系统
+ * 78 张牌的空间状态 · 四向语义 · 五个思维操作 · 语法网格 · 解读资料导出
+ * 纯原生 JavaScript，无后端、无网络、无 AI 接口。
+ */
+(function () {
+  'use strict';
+
+  const T = window.TAROT;
+  const ART = window.TAROT_ART;
+
+  /* ============================================================
+   * 1. 常量与规则
+   * ========================================================== */
+  const SPACE = 1000;            /* 桌布内部坐标空间（正方形） */
+  const PAD = 38;                /* 桌布内边距（坐标单位） */
+  const CARD_ASPECT = 1.66;
+  const RATIO_DESKTOP = 0.05;    /* 卡牌宽度 / 桌布宽度：越小牌越小、桌布越显得开阔 */
+  const RATIO_MOBILE = 0.076;
+
+  const DIRS = {
+    upright: {
+      key: 'upright', label: '正向', short: '正', deg: 0, color: '#e2c17c',
+      angle: '0°', sem: '保留该牌的基础寓意'
+    },
+    reversed: {
+      key: 'reversed', label: '逆向', short: '逆', deg: 180, color: '#e09280',
+      angle: '180°', sem: '基础寓意朝相反方向解释'
+    },
+    inward: {
+      key: 'inward', label: '向内', short: '内', deg: 270, color: '#9fb6e8',
+      angle: '270°（逆时针 90°）', sem: '向内回溯、内在化、尚未显化'
+    },
+    outward: {
+      key: 'outward', label: '向外', short: '外', deg: 90, color: '#e8c58f',
+      angle: '90°（顺时针 90°）', sem: '推进、显化、能量向外作用'
+    }
+  };
+  const DIR_KEYS = ['upright', 'reversed', 'inward', 'outward'];
+  const FLIP = { upright: 'reversed', reversed: 'upright', inward: 'outward', outward: 'inward' };
+
+  const REVERSE_MODES = {
+    reverseExplore: {
+      label: '反向探索',
+      desc: '探索与原有方向相反的可能性，纳入相反发展方向的考察。'
+    },
+    negate: {
+      label: '否定质疑',
+      desc: '质疑既有判断，检视某个未经证实的前提是否成立。'
+    },
+    turn: {
+      label: '转折转向',
+      desc: '在操作过程中引入转折点，关注方向改变与前后阶段对比。'
+    }
+  };
+
+  const OP_LABELS = {
+    emotion: '心绪／欲求',
+    diverge: '发散／探索',
+    converge: '皈依／实在',
+    reverse: '反转／否定',
+    advance: '推进／演化'
+  };
+
+  const SPEED_LABELS = { first: '首次点击（默认强度）', fast: '快速', medium: '中速', slow: '缓慢' };
+
+  const RULES = {
+    version: 'STG-1.0',
+    fastMs: 350,
+    slowMs: 900,
+    defaultIntensity: 0.6,
+    gridDefault: 15,
+    gridMin: 5,
+    gridMax: 15,
+    maxUndo: 80
+  };
+
+  const AI_GUIDE = `请根据上方资料解读本次自定义塔罗结果。
+
+首先阅读用户最初提出的问题，然后阅读本系统的规则、操作历史、抽牌清单和网格结构。
+
+请严格区分以下四种信息：
+
+卡牌本身的基础牌义。
+
+卡牌的最终方向及其语义。
+
+用户通过按钮操作表达的意图。
+
+用户在网格中构造的语法与关系。
+
+对于反转操作，请进一步区分三种模式：
+
+反向探索：探索与原有方向相反的可能性。
+
+否定质疑：检视某个前提是否成立，允许对既有解释提出质疑。
+
+转折转向：关注操作历史中被标记的转折位置及其前后关系。
+
+每次反转操作都应根据自己的模式和历史位置进行理解。
+
+不要因为用户曾经点击反转按钮，就对所有卡牌的最终牌义再次自动取反。单张牌的最终方向决定该牌如何解释，反转历史则用于理解用户希望采用的语义视角。
+
+请结合心绪／欲求的操作节奏，发散与皈依的操作历史，以及推进／演化的操作记录，理解用户希望怎样探索问题。不要把这些操作直接当成客观预测结果的证据。
+
+解读必须优先遵循用户实际构造的网格结构。
+
+主干方块主要按照从左到右的方向进行解释；绿色修饰链必须按照规定的上下读取方向解释，并明确说明每条修饰链关联到哪个主干方块。
+
+如果主干存在分支，请分别解释分支和连接关系。如果主干上下同时存在修饰链，可以考虑权衡、双重限定、相互补充或潜在冲突，但不要机械地将它们判定为冲突。
+
+对于关注发展的问题，请根据实际网格结构和卡牌含义探讨事物的当前状态、可能变化、潜在转折和后续发展。不要在没有依据的情况下强行把所有牌排列为固定的起因、过程和结果。
+
+请先解释网格的整体结构，再分析各个主干节点及其修饰关系，最后给出综合解释。
+
+当出现多种合理解释时，请指出主要解释及其他可能性，不要将象征性解读当作已经客观证实的事实。
+
+如果资料存在缺失或结构存在歧义，请明确指出，不要擅自补造未提供的信息。`;
+
+  /* ============================================================
+   * 2. 工具
+   * ========================================================== */
+  function $(sel) { return document.querySelector(sel); }
+  function clamp(v, a, b) { return Math.min(b, Math.max(a, v)); }
+  function rand(a, b) { return a + Math.random() * (b - a); }
+  function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+  function shuffleIn(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    return arr;
+  }
+  function clone(obj) {
+    if (typeof structuredClone === 'function') {
+      try { return structuredClone(obj); } catch (e) { /* fallthrough */ }
+    }
+    return JSON.parse(JSON.stringify(obj));
+  }
+  function pad2(n) { return String(n).padStart(2, '0'); }
+  function stamp(d) {
+    d = d || new Date();
+    return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()) +
+      ' ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes()) + ':' + pad2(d.getSeconds());
+  }
+  function fileStamp(d) {
+    d = d || new Date();
+    return '' + d.getFullYear() + pad2(d.getMonth() + 1) + pad2(d.getDate()) + '-' + pad2(d.getHours()) + pad2(d.getMinutes());
+  }
+  function round1(n) { return Math.round(n * 10) / 10; }
+
+  /* ============================================================
+   * 3. 应用状态
+   * ========================================================== */
+  const state = {
+    cards: [],
+    selection: [],                       /* 抽牌顺序（uid） */
+    events: [],
+    phase: 'editing',                    /* editing | revealed */
+    counts: { emotion: 0, diverge: 0, converge: 0, reverse: 0, advance: 0 },
+    lastClick: { emotion: 0, diverge: 0, converge: 0, reverse: 0, advance: 0 },
+    reverseMode: 'reverseExplore',
+    flipCount: 0,
+    grid: { size: RULES.gridDefault, cells: [] },
+    selectedCell: null,
+    allowDup: false,
+    undoStack: [],
+    generatedAt: null,
+    outputText: '',
+    stale: false,
+    startedAt: Date.now(),
+    lastSpeed: null,
+    lastIntensity: null
+  };
+
+  const el = {};
+  let tablePx = 0;
+  let cardPxW = 0;
+  let cardPxH = 0;
+  let ratio = RATIO_DESKTOP;
+  let toastTimer = null;
+  let confirmResolver = null;
+  let chaosTimer = null;
+
+  /* ============================================================
+   * 4. 初始化
+   * ========================================================== */
+  function init() {
+    cacheDom();
+    buildGridSizeOptions();
+    ensureGridCells();
+    buildCards();
+    measure();
+    drawCloth();
+    initialLayout();
+    bindEvents();
+    buildGridDom();
+    renderAll();
+    updateStage();
+    if (window.ResizeObserver) {
+      let raf = 0;
+      const ro = new ResizeObserver(function () {
+        cancelAnimationFrame(raf);
+        raf = requestAnimationFrame(function () {
+          const before = cardPxW;
+          measure();
+          drawCloth();
+          if (Math.abs(cardPxW - before) > 0.5) {
+            clampAll();
+            resolveCollisions(4);
+          }
+          renderCards(false);
+        });
+      });
+      ro.observe(el.tablecloth);
+    } else {
+      window.addEventListener('resize', function () {
+        measure(); drawCloth(); renderCards(false);
+      });
+    }
+  }
+
+  function cacheDom() {
+    el.question = $('#questionInput');
+    el.extraSubject = $('#extraSubject');
+    el.extraRange = $('#extraRange');
+    el.extraContext = $('#extraContext');
+    el.stageBar = $('#stageBar');
+    el.stageSteps = Array.from(document.querySelectorAll('.stage'));
+    el.tablecloth = $('#tablecloth');
+    el.cardsLayer = $('#cardsLayer');
+    el.clothTex = $('#clothTex');
+    el.tableHint = $('#tableHint');
+    el.tableFootHint = $('#tableFootHint');
+    el.timeAxis = $('#timeAxis');
+    el.tableBadge = $('#tableBadge');
+    el.selCount = $('#selCount');
+    el.selBadge = $('#selBadge');
+    el.freezeLabel = $('#freezeLabel');
+    el.dirDigest = $('#dirDigest');
+    el.opButtons = $('#opButtons');
+    el.reverseModes = $('#reverseModes');
+    el.reverseModeName = $('#reverseModeName');
+    el.reverseModeDesc = $('#reverseModeDesc');
+    el.undoBtn = $('#undoBtn');
+    el.resetBtn = $('#resetBtn');
+    el.railStatus = $('#railStatus');
+    el.selectionList = $('#selectionList');
+    el.selEmpty = $('#selEmpty');
+    el.revealBtn = $('#revealBtn');
+    el.backToEditBtn = $('#backToEditBtn');
+    el.eventLog = $('#eventLog');
+    el.eventCount = $('#eventCount');
+    el.galleryPanel = $('#galleryPanel');
+    el.revealedGallery = $('#revealedGallery');
+    el.gridSection = $('#gridSection');
+    el.gridBoard = $('#gridBoard');
+    el.gridColLabels = $('#gridColLabels');
+    el.gridRowLabels = $('#gridRowLabels');
+    el.gridEditor = $('#gridEditor');
+    el.gridOk = $('#gridOk');
+    el.gridErrors = $('#gridErrors');
+    el.gridHint = $('#gridHint');
+    el.gridSize = $('#gridSize');
+    el.allowDup = $('#allowDup');
+    el.exportSection = $('#exportSection');
+    el.exportHint = $('#exportHint');
+    el.outputText = $('#outputText');
+    el.genBtn = $('#genBtn');
+    el.copyBtn = $('#copyBtn');
+    el.pngBtn = $('#pngBtn');
+    el.jsonBtn = $('#jsonBtn');
+    el.confirmModal = $('#confirmModal');
+    el.confirmTitle = $('#confirmTitle');
+    el.confirmBody = $('#confirmBody');
+    el.confirmOk = $('#confirmOk');
+    el.confirmCancel = $('#confirmCancel');
+    el.cardModal = $('#cardModal');
+    el.cardModalArt = $('#cardModalArt');
+    el.cardModalInfo = $('#cardModalInfo');
+    el.cardModalClose = $('#cardModalClose');
+    el.toast = $('#toast');
+  }
+
+  /* ============================================================
+   * 5. 桌布纹理
+   * ========================================================== */
+  function drawCloth() {
+    const cv = el.clothTex;
+    const size = el.tablecloth.clientWidth;
+    if (!size || !cv) return;
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    cv.width = Math.round(size * dpr);
+    cv.height = Math.round(size * dpr);
+    const ctx = cv.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, size, size);
+
+    /* 细网格 */
+    ctx.strokeStyle = 'rgba(226,193,124,0.045)';
+    ctx.lineWidth = 1;
+    const step = size / 18;
+    for (let i = 1; i < 18; i++) {
+      ctx.beginPath(); ctx.moveTo(i * step, 0); ctx.lineTo(i * step, size); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0, i * step); ctx.lineTo(size, i * step); ctx.stroke();
+    }
+
+    /* 同心圆 */
+    for (let i = 0; i < 4; i++) {
+      ctx.beginPath();
+      ctx.arc(size / 2, size / 2, size * (0.16 + i * 0.085), 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(226,193,124,' + (0.075 - i * 0.013).toFixed(3) + ')';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+
+    /* 放射线 */
+    ctx.strokeStyle = 'rgba(226,193,124,0.04)';
+    for (let i = 0; i < 24; i++) {
+      const a = (Math.PI * 2 * i) / 24;
+      ctx.beginPath();
+      ctx.moveTo(size / 2 + Math.cos(a) * size * 0.2, size / 2 + Math.sin(a) * size * 0.2);
+      ctx.lineTo(size / 2 + Math.cos(a) * size * 0.47, size / 2 + Math.sin(a) * size * 0.47);
+      ctx.stroke();
+    }
+
+    /* 星尘 */
+    for (let i = 0; i < 90; i++) {
+      const x = Math.random() * size;
+      const y = Math.random() * size;
+      const r = Math.random() * 1.1 + 0.2;
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,255,255,' + (0.05 + Math.random() * 0.25).toFixed(2) + ')';
+      ctx.fill();
+    }
+  }
+
+  /* ============================================================
+   * 6. 卡牌：创建、坐标、尺寸
+   * ========================================================== */
+  function buildCards() {
+    const frag = document.createDocumentFragment();
+    T.DECK.forEach(function (card) {
+      const runtime = {
+        uid: card.uid,
+        card: card,
+        x: 0,
+        y: 0,
+        dir: 'upright',
+        visAngle: 0,
+        selected: false,
+        drawIndex: null
+      };
+      const node = document.createElement('button');
+      node.type = 'button';
+      node.className = 'tcard';
+      node.dataset.uid = String(card.uid);
+      node.innerHTML =
+        '<span class="tcard-rot"><span class="tcard-flip">' +
+        '<span class="tcard-back">' + ART.back() + '<i class="dir-mark"></i></span>' +
+        '<span class="tcard-face"></span>' +
+        '</span></span><span class="tcard-badge" hidden></span>';
+      runtime.el = node;
+      runtime.rot = node.querySelector('.tcard-rot');
+      runtime.faceEl = node.querySelector('.tcard-face');
+      runtime.badge = node.querySelector('.tcard-badge');
+      node.addEventListener('click', function () { onCardClick(runtime); });
+      runtime.nodeTitle = card.name;
+      state.cards.push(runtime);
+      frag.appendChild(node);
+    });
+    el.cardsLayer.appendChild(frag);
+  }
+
+  function initialLayout() {
+    const b = bounds();
+    const n = 9;
+    const cx = (b.maxX - b.minX) / (n - 1);
+    const cy = (b.maxY - b.minY) / (n - 1);
+    const slots = [];
+    for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) slots.push([c, r]);
+    shuffleIn(slots);
+    state.cards.forEach(function (card, i) {
+      const s = slots[i];
+      card.x = b.minX + s[0] * cx + rand(-0.3, 0.3) * cx;
+      card.y = b.minY + s[1] * cy + rand(-0.3, 0.3) * cy;
+      card.dir = 'upright';
+      card.visAngle = 0;
+    });
+    clampAll();
+    resolveCollisions(4);
+  }
+
+  function randomDir() {
+    const r = Math.random();
+    if (r < 0.5) return 'upright';
+    if (r < 0.7) return 'reversed';
+    if (r < 0.85) return 'inward';
+    return 'outward';
+  }
+
+  function randomOtherDir(cur) {
+    let d = randomDir();
+    let guard = 0;
+    while (d === cur && guard++ < 8) d = randomDir();
+    return d;
+  }
+
+  function measure() {
+    tablePx = el.tablecloth.clientWidth;
+    ratio = tablePx < 560 ? RATIO_MOBILE : RATIO_DESKTOP;
+    cardPxW = tablePx * ratio;
+    cardPxH = cardPxW * CARD_ASPECT;
+    el.tablecloth.style.setProperty('--cw', cardPxW.toFixed(2) + 'px');
+    el.tablecloth.style.setProperty('--ch', cardPxH.toFixed(2) + 'px');
+  }
+
+  function designCard() {
+    const w = SPACE * ratio;
+    /* 碰撞体积很小：只保留刚好不"完全重叠"的最小间隔，允许牌自然叠放 */
+    return { w: w, h: w * CARD_ASPECT, minDist: w * 0.14 };
+  }
+
+  function bounds() {
+    const d = designCard();
+    return {
+      minX: PAD + d.w / 2,
+      maxX: SPACE - PAD - d.w / 2,
+      minY: PAD + d.h / 2,
+      maxY: SPACE - PAD - d.h / 2
+    };
+  }
+
+  function clampAll() {
+    const b = bounds();
+    state.cards.forEach(function (c) {
+      c.x = clamp(c.x, b.minX, b.maxX);
+      c.y = clamp(c.y, b.minY, b.maxY);
+    });
+  }
+
+  /* 大幅位移越界时按镜面反射折回桌布内，而不是贴死在边缘 */
+  function reflectAll() {
+    const b = bounds();
+    state.cards.forEach(function (c) {
+      if (c.x < b.minX) c.x = b.minX + (b.minX - c.x);
+      else if (c.x > b.maxX) c.x = b.maxX - (c.x - b.maxX);
+      if (c.y < b.minY) c.y = b.minY + (b.minY - c.y);
+      else if (c.y > b.maxY) c.y = b.maxY - (c.y - b.maxY);
+    });
+    clampAll();
+  }
+
+  function resolveCollisions(iterations) {
+    const d = designCard();
+    const min = d.minDist;
+    const min2 = min * min;
+    const cards = state.cards;
+    const b = bounds();
+    const iters = iterations || 5;
+    for (let it = 0; it < iters; it++) {
+      let moved = false;
+      for (let i = 0; i < cards.length; i++) {
+        const a = cards[i];
+        for (let j = i + 1; j < cards.length; j++) {
+          const c = cards[j];
+          let dx = c.x - a.x;
+          let dy = c.y - a.y;
+          let d2 = dx * dx + dy * dy;
+          if (d2 >= min2) continue;
+          let dist = Math.sqrt(d2);
+          if (dist < 0.001) {
+            const ang = Math.random() * Math.PI * 2;
+            dx = Math.cos(ang); dy = Math.sin(ang); dist = 1;
+          }
+          const push = (min - dist) / 2;
+          const ux = dx / dist;
+          const uy = dy / dist;
+          a.x -= ux * push; a.y -= uy * push;
+          c.x += ux * push; c.y += uy * push;
+          moved = true;
+        }
+      }
+      for (let i = 0; i < cards.length; i++) {
+        cards[i].x = clamp(cards[i].x, b.minX, b.maxX);
+        cards[i].y = clamp(cards[i].y, b.minY, b.maxY);
+      }
+      if (!moved) break;
+    }
+  }
+
+  /* ============================================================
+   * 7. 渲染
+   * ========================================================== */
+  function renderCards(animate) {
+    const S = tablePx;
+    if (!S) return;
+    const d = designCard();
+    if (animate === false) el.cardsLayer.classList.add('no-anim');
+    const isFrozen = state.phase === 'revealed';
+    state.cards.forEach(function (c) {
+      const px = (c.x / SPACE) * S;
+      const py = (c.y / SPACE) * S;
+      c.el.style.transform = 'translate3d(' + (px - cardPxW / 2).toFixed(2) + 'px,' + (py - cardPxH / 2).toFixed(2) + 'px,0)';
+      c.rot.style.transform = 'rotate(' + c.visAngle.toFixed(1) + 'deg)';
+      const z = 10 + Math.round(c.y) + (c.selected ? 600 : 0);
+      c.el.style.zIndex = String(z);
+      c.el.classList.toggle('is-selected', c.selected);
+      c.el.classList.toggle('is-revealed', isFrozen && c.selected);
+      if (c.drawIndex) {
+        c.badge.hidden = false;
+        c.badge.textContent = String(c.drawIndex);
+      } else {
+        c.badge.hidden = true;
+      }
+      const dirLabel = DIRS[c.dir].label;
+      c.el.setAttribute('aria-label',
+        c.selected
+          ? '第 ' + c.drawIndex + ' 张 · 已选择 · ' + (isFrozen ? c.card.name + ' · ' + dirLabel : '未揭示') + ' · ' + dirLabel
+          : '牌背 · ' + dirLabel);
+    });
+    el.tablecloth.classList.toggle('is-frozen', isFrozen);
+    if (animate === false) {
+      requestAnimationFrame(function () { el.cardsLayer.classList.remove('no-anim'); });
+    }
+  }
+
+  function dirDigest() {
+    const d = { upright: 0, reversed: 0, inward: 0, outward: 0 };
+    state.cards.forEach(function (c) { d[c.dir]++; });
+    return d;
+  }
+
+  function digestText(d) {
+    return '正 ' + d.upright + ' · 逆 ' + d.reversed + ' · 内 ' + d.inward + ' · 外 ' + d.outward;
+  }
+
+  function totalClicks() {
+    let n = 0;
+    Object.keys(state.counts).forEach(function (k) { n += state.counts[k]; });
+    return n;
+  }
+
+  function renderCounters() {
+    Array.from(document.querySelectorAll('[data-count]')).forEach(function (node) {
+      const key = node.dataset.count;
+      node.textContent = String(state.counts[key]);
+    });
+    el.dirDigest.textContent = digestText(dirDigest());
+    el.railStatus.textContent = '累计操作 ' + totalClicks() + ' 次 · 反转 ' + state.flipCount +
+      ' 次 · 已抽 ' + state.selection.length + ' 张';
+  }
+
+  function renderSelection() {
+    const revealed = state.phase === 'revealed';
+    el.selectionList.innerHTML = state.selection.map(function (uid, i) {
+      const c = cardByUid(uid);
+      const dir = DIRECTIONS_TEXT(c.dir);
+      const name = revealed ? c.card.name : '未揭示';
+      const cls = revealed ? '' : ' hidden-name';
+      const meta = revealed
+        ? '<div class="sel-meta">' + c.card.en + ' · ' + dir.label + ' · ' + dir.angle + '</div>'
+        : '<div class="sel-meta">等待揭示 · ' + dir.label + '</div>';
+      return '<li class="sel-item">' +
+        '<span class="sel-idx">' + (i + 1) + '</span>' +
+        '<span class="sel-body"><div class="sel-name' + cls + '">' + name + '</div>' + meta + '</span>' +
+        (revealed ? '' : '<button type="button" class="sel-remove" data-remove="' + uid + '" aria-label="取消第 ' + (i + 1) + ' 张">✕</button>') +
+        '</li>';
+    }).join('');
+    el.freezeLabel.textContent = revealed ? '牌面方向已冻结' : '牌面方向可编辑';
+    el.freezeLabel.classList.toggle('is-frozen', revealed);
+    if (el.tableFootHint) el.tableFootHint.textContent = revealed ? '点击已揭示的牌查看牌义' : '点击牌背即可选牌';
+    el.selEmpty.hidden = state.selection.length > 0;
+    el.selCount.textContent = String(state.selection.length);
+    el.selBadge.textContent = state.selection.length + ' 张';
+    el.tableBadge.textContent = '78 张牌';
+    el.revealBtn.disabled = state.selection.length === 0 || state.phase !== 'editing';
+    el.revealBtn.hidden = state.phase === 'revealed';
+    el.backToEditBtn.hidden = state.phase !== 'revealed';
+  }
+
+  function DIRECTIONS_TEXT(key) { return DIRS[key]; }
+
+  function renderEvents() {
+    const items = state.events.slice(-40);
+    el.eventCount.textContent = state.events.length + ' 次';
+    el.eventLog.innerHTML = items.map(function (ev) {
+      const detail = [];
+      if (ev.type === 'emotion') {
+        detail.push('速度：' + SPEED_LABELS[ev.speed] + (ev.intervalMs != null ? '（间隔 ' + ev.intervalMs + ' ms）' : ''));
+        detail.push('混沌强度：' + ev.intensity.toFixed(2) + '（该按钮第 ' + ev.clickCountType + ' 次）');
+      } else if (ev.type === 'reverse') {
+        detail.push('模式：' + REVERSE_MODES[ev.mode].label + ' · 累计反转 ' + ev.flipCount + ' 次');
+      } else {
+        detail.push('该按钮第 ' + ev.clickCountType + ' 次' + (ev.intervalMs != null ? ' · 间隔 ' + ev.intervalMs + ' ms' : ''));
+      }
+      detail.push('方向：' + digestText(ev.dirAfter));
+      return '<li class="event-item' + (ev.type === 'reverse' ? ' t-reverse' : '') + '">' +
+        '<span class="event-seq">' + ev.seq + '</span>' +
+        '<span class="event-text"><b>' + OP_LABELS[ev.type] + '</b>' +
+        detail.map(function (d) { return '<small>' + d + '</small>'; }).join('') +
+        '</span></li>';
+    }).join('');
+    el.eventLog.scrollTop = el.eventLog.scrollHeight;
+  }
+
+  function renderGallery() {
+    if (!state.selection.length) {
+      el.revealedGallery.innerHTML = '';
+      return;
+    }
+    el.revealedGallery.innerHTML = '';
+    const frag = document.createDocumentFragment();
+    state.selection.forEach(function (uid, i) {
+      const c = cardByUid(uid);
+      const dir = DIRS[c.dir];
+      const dirCls = c.dir === 'reversed' ? 'rev' : c.dir === 'inward' ? 'in' : c.dir === 'outward' ? 'out' : '';
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'g-card';
+      btn.innerHTML =
+        '<span class="g-art">' + ART.face(c.card) + '<span class="g-idx">' + (i + 1) + '</span></span>' +
+        '<span class="g-name">' + c.card.name + '</span>' +
+        '<span class="g-dir ' + dirCls + '">' + dir.label + ' · ' + dir.angle + '</span>';
+      btn.addEventListener('click', function () { openCardDetail(c); });
+      frag.appendChild(btn);
+    });
+    el.revealedGallery.appendChild(frag);
+  }
+
+  function updateStage() {
+    const done = {
+      ask: !!(el.question.value.trim() || state.events.length || state.selection.length),
+      operate: state.events.length > 0,
+      draw: state.selection.length > 0,
+      reveal: state.phase === 'revealed',
+      grid: hasGridContent(),
+      export: !!state.generatedAt && !state.stale
+    };
+    const order = ['ask', 'operate', 'draw', 'reveal', 'grid', 'export'];
+    let current = 'ask';
+    for (let i = 0; i < order.length; i++) {
+      if (!done[order[i]]) { current = order[i]; break; }
+      current = order[i];
+    }
+    el.stageSteps.forEach(function (node) {
+      const key = node.dataset.stage;
+      node.classList.toggle('is-done', !!done[key] && key !== current);
+      node.classList.toggle('is-current', key === current);
+    });
+  }
+
+  function updateSections() {
+    const revealed = state.phase === 'revealed';
+    el.galleryPanel.hidden = !revealed;
+    el.exportSection.hidden = !revealed;
+    el.gridSection.hidden = !revealed && !hasGridContent();
+    el.gridSection.classList.toggle('is-locked', !revealed);
+    el.gridHint.textContent = revealed ? '点击格子进行编辑' : '牌面编辑中，网格暂时只读';
+    el.exportHint.textContent = state.stale
+      ? '状态已变化，请重新生成（当前文本对应旧状态）'
+      : '文本、图片与 JSON 全部来自当前真实状态';
+    el.copyBtn.disabled = !state.generatedAt;
+    el.pngBtn.disabled = state.phase !== 'revealed';
+    el.jsonBtn.disabled = state.phase !== 'revealed';
+  }
+
+  function renderAll() {
+    renderCards();
+    renderSelection();
+    renderGallery();
+    renderEvents();
+    renderCounters();
+    renderGrid();
+    renderEditor();
+    validateNow();
+    updateSections();
+    updateStage();
+    updateOpButtons();
+  }
+
+  function updateOpButtons() {
+    const frozen = state.phase === 'revealed';
+    Array.from(el.opButtons.children).forEach(function (b) { b.disabled = frozen; });
+    el.reverseModes.querySelectorAll('button').forEach(function (b) { b.disabled = frozen; });
+    el.undoBtn.disabled = state.undoStack.length === 0;
+  }
+
+  /* ============================================================
+   * 8. 方向与坐标快照
+   * ========================================================== */
+  function setDir(card, dir, flip) {
+    if (flip) {
+      card.dir = FLIP[card.dir];
+      card.visAngle += 180;
+      return;
+    }
+    if (card.dir === dir) return;
+    const target = DIRS[dir].deg;
+    const cur = ((card.visAngle % 360) + 360) % 360;
+    const delta = ((target - cur + 540) % 360) - 180;
+    card.visAngle += delta;
+    card.dir = dir;
+  }
+
+  function cardsCompact() {
+    return state.cards.map(function (c) {
+      return [c.uid, Math.round(c.x), Math.round(c.y), DIR_KEYS.indexOf(c.dir)];
+    });
+  }
+
+  function cardByUid(uid) {
+    return state.cards[uid];
+  }
+
+  /* ============================================================
+   * 9. 历史 / 撤销
+   * ========================================================== */
+  function snapshot() {
+    return {
+      cards: state.cards.map(function (c) {
+        return { x: c.x, y: c.y, dir: c.dir, visAngle: c.visAngle, selected: c.selected, drawIndex: c.drawIndex };
+      }),
+      selection: state.selection.slice(),
+      events: clone(state.events),
+      phase: state.phase,
+      counts: clone(state.counts),
+      lastClick: clone(state.lastClick),
+      reverseMode: state.reverseMode,
+      flipCount: state.flipCount,
+      grid: { size: state.grid.size, cells: clone(state.grid.cells) },
+      selectedCell: state.selectedCell ? { r: state.selectedCell.r, c: state.selectedCell.c } : null,
+      allowDup: state.allowDup,
+      generatedAt: state.generatedAt,
+      outputText: state.outputText,
+      stale: state.stale
+    };
+  }
+
+  function pushUndo() {
+    state.undoStack.push(snapshot());
+    if (state.undoStack.length > RULES.maxUndo) state.undoStack.shift();
+    updateOpButtons();
+  }
+
+  function restoreSnapshot(snap) {
+    state.cards.forEach(function (c, i) { Object.assign(c, snap.cards[i]); });
+    state.selection = snap.selection.slice();
+    state.events = clone(snap.events);
+    state.phase = snap.phase;
+    state.counts = clone(snap.counts);
+    state.lastClick = clone(snap.lastClick);
+    state.reverseMode = snap.reverseMode;
+    state.flipCount = snap.flipCount;
+    state.grid = { size: snap.grid.size, cells: clone(snap.grid.cells) };
+    state.selectedCell = snap.selectedCell ? { r: snap.selectedCell.r, c: snap.selectedCell.c } : null;
+    state.allowDup = snap.allowDup;
+    state.generatedAt = snap.generatedAt;
+    state.outputText = snap.outputText;
+    state.stale = snap.stale;
+    el.outputText.textContent = state.outputText || '还没有生成资料。在网格编辑完成后点击「生成解读资料」。';
+    buildGridDom();
+    renderAll();
+  }
+
+  function doUndo() {
+    if (!state.undoStack.length) return;
+    const snap = state.undoStack[state.undoStack.length - 1];
+    const needConfirm = snap.phase !== state.phase;
+    const run = function () {
+      state.undoStack.pop();
+      restoreSnapshot(snap);
+      closeAllModals();
+      toast('已撤销上一步');
+    };
+    if (needConfirm) {
+      confirmDialog('撤销到揭示之前？',
+        '上一步操作会把牌面恢复到揭示前的编辑状态：所有牌的最终方向将重新随思维操作变化。网格内容会保留。是否继续？',
+        '撤销并返回编辑', '取消').then(function (ok) { if (ok) run(); });
+    } else {
+      run();
+    }
+  }
+
+  function beginOp() {
+    pushUndo();
+    clearTimeout(chaosTimer);
+    el.cardsLayer.classList.remove('is-chaotic');
+    return { dirBefore: dirDigest(), cardsBefore: cardsCompact() };
+  }
+
+  function finishOp(type, before, extra) {
+    const ev = Object.assign({
+      seq: state.events.length + 1,
+      type: type,
+      at: new Date(),
+      elapsedMs: Date.now() - state.startedAt,
+      intervalMs: null,
+      speed: null,
+      intensity: null,
+      mode: null,
+      clickCountType: state.counts[type],
+      clickCountTotal: totalClicks(),
+      dirBefore: before.dirBefore,
+      dirAfter: dirDigest(),
+      flipCount: state.flipCount,
+      cardsBefore: before.cardsBefore,
+      cardsAfter: cardsCompact()
+    }, extra || {});
+    state.events.push(ev);
+    state.lastClick[type] = Date.now();
+    renderEvents();
+    renderCounters();
+    renderSelection();
+    markStale();
+    updateStage();
+    updateOpButtons();
+    hideTableHint();
+    return ev;
+  }
+
+  function markStale() {
+    if (state.generatedAt) {
+      state.stale = true;
+      updateSections();
+    }
+  }
+
+  /* ============================================================
+   * 10. 五个思维操作
+   * ========================================================== */
+  function opEmotion() {
+    if (state.phase === 'revealed') return;
+    const before = beginOp();
+    const now = Date.now();
+    const prev = state.lastClick.emotion;
+    let speed = 'first';
+    let interval = null;
+    if (prev) {
+      interval = now - prev;
+      speed = interval < RULES.fastMs ? 'fast' : interval < RULES.slowMs ? 'medium' : 'slow';
+    }
+    state.counts.emotion++;
+    const base = speed === 'first' ? RULES.defaultIntensity
+      : speed === 'fast' ? 1 : speed === 'medium' ? 0.62 : 0.34;
+    const countFactor = 0.72 + 0.28 * Math.min(state.counts.emotion, 8) / 8;
+    const intensity = clamp(base * countFactor, 0.2, 1);
+    /* 全局混沌：每张牌被甩向任意方向、距离各不相同，可跨越整块桌布 */
+    const step = (0.05 + 0.25 * intensity) * SPACE;
+
+    state.cards.forEach(function (c) {
+      const ang = Math.random() * Math.PI * 2;
+      const dist = step * (0.2 + Math.random() * 1.0);
+      c.x += Math.cos(ang) * dist;
+      c.y += Math.sin(ang) * dist * (0.75 + Math.random() * 0.5);
+      /* 混沌感同时来自频繁、随机的四向变化 */
+      if (Math.random() < 0.3 + 0.6 * intensity) {
+        setDir(c, randomOtherDir(c.dir), false);
+      }
+    });
+    reflectAll();
+    resolveCollisions(2);
+    el.cardsLayer.classList.add('is-chaotic');
+    state.cards.forEach(function (c) {
+      c.el.style.setProperty('--jit-delay', (Math.random() * 0.09).toFixed(3) + 's');
+    });
+    clearTimeout(chaosTimer);
+    chaosTimer = setTimeout(function () {
+      el.cardsLayer.classList.remove('is-chaotic');
+    }, 560);
+    renderCards();
+    renderCounters();
+    state.lastSpeed = speed;
+    state.lastIntensity = intensity;
+    flashOp('emotion');
+    finishOp('emotion', before, { speed: speed, intervalMs: interval, intensity: intensity });
+    el.railStatus.textContent += ' · 本次节奏：' + SPEED_LABELS[speed];
+  }
+
+  function opDiverge() {
+    if (state.phase === 'revealed') return;
+    const before = beginOp();
+    const now = Date.now();
+    const prev = state.lastClick.diverge;
+    const interval = prev ? now - prev : null;
+    state.counts.diverge++;
+    const R = SPACE * 0.42;
+    const forces = state.cards.map(function () { return { x: 0, y: 0 }; });
+    const cards = state.cards;
+    for (let i = 0; i < cards.length; i++) {
+      for (let j = i + 1; j < cards.length; j++) {
+        const a = cards[i], b = cards[j];
+        let dx = b.x - a.x;
+        let dy = b.y - a.y;
+        let d = Math.sqrt(dx * dx + dy * dy);
+        if (d > R || d < 0.001) continue;
+        const f = (1 - d / R) * 46;
+        const ux = dx / d, uy = dy / d;
+        forces[i].x -= ux * f; forces[i].y -= uy * f;
+        forces[j].x += ux * f; forces[j].y += uy * f;
+      }
+    }
+    cards.forEach(function (c, i) {
+      const L = Math.sqrt(forces[i].x * forces[i].x + forces[i].y * forces[i].y);
+      const cap = 52;
+      const k = L > cap ? cap / L : 1;
+      c.x += forces[i].x * k + rand(-3, 3);
+      c.y += forces[i].y * k + rand(-3, 3);
+      if (Math.random() < 0.16) setDir(c, randomDir(), false);
+    });
+    clampAll();
+    resolveCollisions(4);
+    renderCards();
+    flashOp('diverge');
+    finishOp('diverge', before, { intervalMs: interval });
+  }
+
+  function opConverge() {
+    if (state.phase === 'revealed') return;
+    const before = beginOp();
+    const now = Date.now();
+    const prev = state.lastClick.converge;
+    const interval = prev ? now - prev : null;
+    state.counts.converge++;
+
+    const seeds = [];
+    for (let i = 0; i < 4; i++) {
+      const a = rand(0.2, 0.8);
+      const b = rand(0.2, 0.8);
+      seeds.push({ x: a * SPACE, y: b * SPACE });
+    }
+    state.cards.forEach(function (c) {
+      let best = null;
+      let bestD = Infinity;
+      seeds.forEach(function (s) {
+        const d = (s.x - c.x) * (s.x - c.x) + (s.y - c.y) * (s.y - c.y);
+        if (d < bestD) { bestD = d; best = s; }
+      });
+      const dx = best.x - c.x;
+      const dy = best.y - c.y;
+      const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+      const pull = Math.min(56, dist * 0.24);
+      c.x += (dx / dist) * pull;
+      c.y += (dy / dist) * pull;
+      if (Math.random() < 0.11) setDir(c, randomDir(), false);
+    });
+    clampAll();
+    resolveCollisions(5);
+    renderCards();
+    flashOp('converge');
+    finishOp('converge', before, { intervalMs: interval });
+  }
+
+  function opReverse() {
+    if (state.phase === 'revealed') return;
+    const before = beginOp();
+    const now = Date.now();
+    const prev = state.lastClick.reverse;
+    const interval = prev ? now - prev : null;
+    state.counts.reverse++;
+    state.flipCount++;
+    state.cards.forEach(function (c) { setDir(c, null, true); });
+    renderCards();
+    flashOp('reverse');
+    const ev = finishOp('reverse', before, {
+      intervalMs: interval,
+      mode: state.reverseMode,
+      modeLabel: REVERSE_MODES[state.reverseMode].label
+    });
+    ev.turnAt = state.reverseMode === 'turn' ? ev.seq : null;
+    renderEvents();
+  }
+
+  function opAdvance() {
+    if (state.phase === 'revealed') return;
+    const before = beginOp();
+    const now = Date.now();
+    const prev = state.lastClick.advance;
+    const interval = prev ? now - prev : null;
+    state.counts.advance++;
+
+    let sumX = 0;
+    state.cards.forEach(function (c) { sumX += c.x; });
+    const meanX = sumX / state.cards.length;
+    const pressure = clamp((0.66 - meanX / SPACE) / 0.5, 0.12, 1);
+    state.cards.forEach(function (c) {
+      c.x += SPACE * (0.03 + Math.random() * 0.032) * pressure;
+      c.y += rand(-9, 9) * (1 - pressure * 0.55);
+    });
+    clampAll();
+    resolveCollisions(4);
+    renderCards();
+    el.timeAxis.classList.remove('pulse');
+    void el.timeAxis.offsetWidth;
+    el.timeAxis.classList.add('pulse');
+    flashOp('advance');
+    finishOp('advance', before, { intervalMs: interval });
+  }
+
+  function flashOp(type) {
+    const btn = el.opButtons.querySelector('[data-op="' + type + '"]');
+    if (!btn) return;
+    btn.classList.remove('is-flash');
+    void btn.offsetWidth;
+    btn.classList.add('is-flash');
+  }
+
+  function hideTableHint() {
+    if (!el.tableHint.hidden) el.tableHint.hidden = true;
+  }
+
+  /* ============================================================
+   * 11. 选牌 / 揭示 / 返回编辑
+   * ========================================================== */
+  function onCardClick(card) {
+    if (state.phase === 'revealed') {
+      if (card.selected) openCardDetail(card);
+      return;
+    }
+    if (card.selected) {
+      if (hasGridContent()) {
+        toast('网格已引用抽牌序号，取消会打乱序号对应关系。请先清空网格或「重新开始」。');
+        return;
+      }
+      pushUndo();
+      const idx = state.selection.indexOf(card.uid);
+      if (idx >= 0) state.selection.splice(idx, 1);
+      renumberSelection();
+      renderSelection();
+      renderCards();
+      markStale();
+      updateStage();
+      toast('已取消第 ' + (idx + 1) + ' 张，其余序号已重排');
+    } else {
+      pushUndo();
+      state.selection.push(card.uid);
+      card.selected = true;
+      card.drawIndex = state.selection.length;
+      renderSelection();
+      renderCards();
+      hideTableHint();
+      markStale();
+      updateStage();
+    }
+    updateOpButtons();
+  }
+
+  function renumberSelection() {
+    state.cards.forEach(function (c) { c.selected = false; c.drawIndex = null; });
+    state.selection.forEach(function (uid, i) {
+      const c = cardByUid(uid);
+      c.selected = true;
+      c.drawIndex = i + 1;
+    });
+  }
+
+  function revealCards() {
+    if (state.phase === 'revealed') return;
+    if (!state.selection.length) {
+      toast('请先在桌布上至少选择一张牌。');
+      return;
+    }
+    pushUndo();
+    state.cards.forEach(function (c) {
+      if (!c.selected) return;
+      if (!c.faceEl.dataset.filled) {
+        c.faceEl.innerHTML = ART.face(c.card);
+        c.faceEl.dataset.filled = '1';
+      }
+    });
+    state.phase = 'revealed';
+    state.selection.forEach(function (uid, i) {
+      const c = cardByUid(uid);
+      c.el.style.setProperty('--flip-delay', (i * 90) + 'ms');
+      c.el.style.setProperty('--flip-order', String(i));
+    });
+    renderAll();
+    ensureGridRevealed();
+    toast('已揭示 ' + state.selection.length + ' 张牌，方向已冻结。');
+    el.galleryPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function ensureGridRevealed() {
+    if (!state.grid.cells.length) ensureGridCells();
+    buildGridDom();
+    renderGrid();
+    renderEditor();
+    validateNow();
+  }
+
+  function backToEdit() {
+    if (state.phase !== 'revealed') return;
+    confirmDialog('返回编辑？',
+      '返回编辑后：牌面重新变为牌背，五个思维按钮恢复可用，牌面方向会再次随操作变化；' +
+      '已填入网格的抽牌序号与网格结构不会丢失，但对应卡牌的最终方向（因而语义）会随操作更新。是否继续？',
+      '返回编辑', '取消').then(function (ok) {
+        if (!ok) return;
+        pushUndo();
+        state.phase = 'editing';
+        renderAll();
+        toast('已返回编辑：可以继续调整牌面方向，调整后再次揭示。');
+      });
+  }
+
+  function resetAll() {
+    confirmDialog('重新开始？',
+      '将清空本次的全部状态：78 张牌重新随机分布、抽牌选择、按钮操作与历史记录、语法网格、以及已生成的资料。此操作不可通过撤销恢复以外的方式找回，是否继续？',
+      '清空并重新开始', '取消').then(function (ok) {
+        if (!ok) return;
+        pushUndo();
+        state.selection = [];
+        state.events = [];
+        state.phase = 'editing';
+        state.counts = { emotion: 0, diverge: 0, converge: 0, reverse: 0, advance: 0 };
+        state.lastClick = { emotion: 0, diverge: 0, converge: 0, reverse: 0, advance: 0 };
+        state.flipCount = 0;
+        state.grid = { size: RULES.gridDefault, cells: [] };
+        state.selectedCell = null;
+        state.allowDup = false;
+        state.generatedAt = null;
+        state.outputText = '';
+        state.stale = false;
+        el.allowDup.checked = false;
+        el.gridSize.value = String(RULES.gridDefault);
+        el.outputText.textContent = '还没有生成资料。在网格编辑完成后点击「生成解读资料」。';
+        clearTimeout(chaosTimer);
+        el.cardsLayer.classList.remove('is-chaotic');
+        state.cards.forEach(function (c) {
+          c.selected = false;
+          c.drawIndex = null;
+          c.faceEl.innerHTML = '';
+          delete c.faceEl.dataset.filled;
+          c.el.style.removeProperty('--flip-delay');
+          c.el.style.removeProperty('--flip-order');
+        });
+        initialLayout();
+        el.tableHint.hidden = false;
+        ensureGridCells();
+        buildGridDom();
+        renderAll();
+        toast('已重新开始');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+  }
+
+  /* ============================================================
+   * 12. 语法网格
+   * ========================================================== */
+  function buildGridSizeOptions() {
+    let html = '';
+    for (let n = RULES.gridMin; n <= RULES.gridMax; n++) {
+      html += '<option value="' + n + '"' + (n === RULES.gridDefault ? ' selected' : '') + '>' + n + ' × ' + n + '</option>';
+    }
+    el.gridSize.innerHTML = html;
+  }
+
+  function ensureGridCells() {
+    const need = state.grid.size * state.grid.size;
+    if (state.grid.cells.length !== need) {
+      state.grid.cells = new Array(need).fill(null);
+    }
+  }
+
+  function hasGridContent() {
+    return state.grid.cells.some(Boolean);
+  }
+
+  function buildGridDom() {
+    const n = state.grid.size;
+    ensureGridCells();
+    el.gridBoard.style.setProperty('--n', n);
+    el.gridBoard.classList.toggle('is-dense', n >= 11);
+    el.gridBoard.innerHTML = '';
+    const frag = document.createDocumentFragment();
+    for (let r = 0; r < n; r++) {
+      for (let c = 0; c < n; c++) {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'gcell';
+        b.dataset.r = r;
+        b.dataset.c = c;
+        b.innerHTML = '<span class="tag"></span><span class="num"></span><span class="nm"></span>';
+        b.setAttribute('aria-label', '第 ' + (r + 1) + ' 行第 ' + (c + 1) + ' 列，空白');
+        frag.appendChild(b);
+      }
+    }
+    el.gridBoard.appendChild(frag);
+
+    let cols = '';
+    let rows = '';
+    for (let i = 1; i <= n; i++) {
+      cols += '<span>' + i + '</span>';
+      rows += '<span>' + i + '</span>';
+    }
+    el.gridColLabels.innerHTML = cols;
+    el.gridRowLabels.innerHTML = rows;
+    el.gridBoard.dataset.size = String(n);
+  }
+
+  function onCellClick(r, c) {
+    if (state.phase !== 'revealed') {
+      toast('揭示牌面后才能编辑语法网格。');
+      return;
+    }
+    state.selectedCell = { r: r, c: c };
+    renderGrid();
+    renderEditor();
+  }
+
+  function cellIndex(r, c) {
+    return r * state.grid.size + c;
+  }
+
+  function selectedCellData() {
+    if (!state.selectedCell) return null;
+    const { r, c } = state.selectedCell;
+    return { r: r, c: c, data: state.grid.cells[cellIndex(r, c)] };
+  }
+
+  function cardNameOfIndex(index) {
+    if (!index || index < 1 || index > state.selection.length) return '';
+    const c = cardByUid(state.selection[index - 1]);
+    return c.card.name;
+  }
+
+  function cellPerson(index) {
+    if (!index || index < 1 || index > state.selection.length) return '—';
+    const c = cardByUid(state.selection[index - 1]);
+    return c.card.name + ' · ' + DIRS[c.dir].label;
+  }
+
+  function renderGrid() {
+    const n = state.grid.size;
+    el.gridBoard.classList.toggle('is-dense', n >= 11);
+    const cells = el.gridBoard.children;
+    if (cells.length !== n * n) return;
+    const a = analyzeGrid();
+    const labelByKey = new Map();
+    a.mains.forEach(function (m) { labelByKey.set(m.r * n + m.c, m.label); });
+    a.mods.forEach(function (m) { labelByKey.set(m.r * n + m.c, m.label); });
+    const size = n;
+    for (let r = 0; r < size; r++) {
+      for (let c = 0; c < size; c++) {
+        const i = r * size + c;
+        const node = cells[i];
+        const cell = state.grid.cells[i];
+        const tag = node.querySelector('.tag');
+        const num = node.querySelector('.num');
+        const nm = node.querySelector('.nm');
+        node.className = 'gcell';
+        node.classList.toggle('is-active', !!state.selectedCell && state.selectedCell.r === r && state.selectedCell.c === c);
+        if (!cell) {
+          tag.textContent = '';
+          num.textContent = '';
+          nm.textContent = '';
+          node.setAttribute('aria-label', '第 ' + (r + 1) + ' 行第 ' + (c + 1) + ' 列，空白');
+          continue;
+        }
+        node.classList.add(cell.type === 'main' ? 'is-main' : 'is-mod');
+        tag.textContent = labelByKey.get(i) || '';
+        num.textContent = cell.index ? String(cell.index) : '?';
+        nm.textContent = cardNameOfIndex(cell.index);
+        node.setAttribute('aria-label',
+          '第 ' + (r + 1) + ' 行第 ' + (c + 1) + ' 列，' +
+          (cell.type === 'main' ? '主干方块 ' + (labelByKey.get(i) || '') : '绿色修饰方块 ' + (labelByKey.get(i) || '')) +
+          '，抽牌序号 ' + (cell.index || '未填写') + '，' + (cardNameOfIndex(cell.index) || ''));
+      }
+    }
+  }
+
+  function renderEditor() {
+    const sel = selectedCellData();
+    if (!sel) {
+      el.gridEditor.innerHTML = '<p class="ge-empty">点击左侧网格中的任意格子开始编辑。<br><br>' +
+        '主干方块（M）用于表达主要语义，从左向右阅读；绿色修饰方块（G）只通过垂直相邻构成修饰链，' +
+        '并必须挂在一个主干方块的上方或下方。</p>';
+      return;
+    }
+    const cell = sel.data;
+    const type = cell ? cell.type : '';
+    const index = cell ? cell.index : '';
+    const options = ['<option value="">— 选择抽牌序号 —</option>'];
+    for (let i = 1; i <= state.selection.length; i++) {
+      const c = cardByUid(state.selection[i - 1]);
+      options.push('<option value="' + i + '"' + (i === index ? ' selected' : '') + '>' +
+        i + ' · ' + c.card.name + '（' + DIRS[c.dir].label + '）</option>');
+    }
+    const preview = cell
+      ? '<b>' + (cell.type === 'main' ? '主干方块' : '绿色修饰方块') + '</b><br>' +
+        (cell.index ? '抽牌序号 ' + cell.index + ' · ' + cellPerson(cell.index) : '尚未选择抽牌序号') +
+        '<br>基础牌义：' + (cell.index && cell.index >= 1 && cell.index <= state.selection.length
+          ? cardByUid(state.selection[cell.index - 1]).card.meaning.upright.slice(0, 46) + '…'
+          : '—')
+      : '当前格子为空白。选择类型后即可填写抽牌序号。';
+    el.gridEditor.innerHTML =
+      '<div class="ge-pos"><span>第 ' + (sel.r + 1) + ' 行 · 第 ' + (sel.c + 1) + ' 列</span><small>' +
+      (cell ? (cell.type === 'main' ? '主干方块' : '绿色修饰方块') : '空白') + '</small></div>' +
+      '<div class="type-switch">' +
+      '<button type="button" data-celltype="" class="' + (!cell ? 'on-main' : '') + '">空白</button>' +
+      '<button type="button" data-celltype="main" class="' + (type === 'main' ? 'on-main' : '') + '">主干方块</button>' +
+      '<button type="button" data-celltype="mod" class="' + (type === 'mod' ? 'on-mod' : '') + '">绿色修饰</button>' +
+      '</div>' +
+      '<label class="ge-field">卡牌序号（本次抽牌 1–' + state.selection.length + '）' +
+      '<select id="cellIndex"' + (!cell ? ' disabled' : '') + '>' + options.join('') + '</select></label>' +
+      '<div class="ge-preview">' + preview + '</div>' +
+      '<button type="button" class="ge-clear" data-clearcell>清空此格</button>';
+  }
+
+  function setCellType(type) {
+    if (state.phase !== 'revealed' || !state.selectedCell) return;
+    const { r, c } = state.selectedCell;
+    const i = cellIndex(r, c);
+    pushUndo();
+    if (!type) {
+      state.grid.cells[i] = null;
+    } else {
+      const prev = state.grid.cells[i];
+      state.grid.cells[i] = { type: type, index: prev && prev.index ? prev.index : firstFreeIndex(i) };
+    }
+    afterGridChange();
+  }
+
+  function setCellIndex(index) {
+    if (state.phase !== 'revealed' || !state.selectedCell) return;
+    const i = cellIndex(state.selectedCell.r, state.selectedCell.c);
+    if (!state.grid.cells[i]) return;
+    pushUndo();
+    state.grid.cells[i].index = index;
+    afterGridChange();
+  }
+
+  function firstFreeIndex(exceptIndex) {
+    const used = new Set();
+    state.grid.cells.forEach(function (cell, i) {
+      if (cell && cell.index && i !== exceptIndex) used.add(cell.index);
+    });
+    for (let i = 1; i <= state.selection.length; i++) {
+      if (!used.has(i)) return i;
+    }
+    return 1;
+  }
+
+  function afterGridChange() {
+    renderGrid();
+    renderEditor();
+    validateNow();
+    markStale();
+    updateStage();
+  }
+
+  /* ---------- 网格分析 ---------- */
+  function analyzeGrid() {
+    const size = state.grid.size;
+    const cells = [];
+    for (let r = 0; r < size; r++) {
+      for (let c = 0; c < size; c++) {
+        const cell = state.grid.cells[r * size + c];
+        if (cell) cells.push({ r: r, c: c, type: cell.type, index: cell.index, key: r * size + c });
+      }
+    }
+    const mains = cells.filter(function (x) { return x.type === 'main'; });
+    const mods = cells.filter(function (x) { return x.type === 'mod'; });
+
+    const sortedMains = mains.slice().sort(function (a, b) { return a.c - b.c || a.r - b.r; });
+    const sortedMods = mods.slice().sort(function (a, b) { return a.c - b.c || a.r - b.r; });
+    sortedMains.forEach(function (m, i) { m.label = 'M' + (i + 1); });
+    sortedMods.forEach(function (m, i) { m.label = 'G' + (i + 1); });
+
+    const isMain = function (r, c) {
+      return r >= 0 && r < size && c >= 0 && c < size && !!state.grid.cells[r * size + c] && state.grid.cells[r * size + c].type === 'main';
+    };
+    const isMod = function (r, c) {
+      return r >= 0 && r < size && c >= 0 && c < size && !!state.grid.cells[r * size + c] && state.grid.cells[r * size + c].type === 'mod';
+    };
+    const byKey = new Map(cells.map(function (x) { return [x.key, x]; }));
+
+    /* 连接关系 */
+    const connections = [];
+    for (let i = 0; i < cells.length; i++) {
+      for (let j = i + 1; j < cells.length; j++) {
+        const a = cells[i];
+        const b = cells[j];
+        const dr = b.r - a.r;
+        const dc = b.c - a.c;
+        const adr = Math.abs(dr);
+        const adc = Math.abs(dc);
+        if (adr > 1 || adc > 1) continue;
+        if (adr === 1 && dc === 0) {
+          if (a.type === 'main' && b.type === 'main') continue; /* 违规，不记为连接 */
+          connections.push({ kind: a.type === b.type ? 'vertical-chain' : 'vertical-attach', a: a, b: b });
+        } else if (dr === 0 && adc === 1) {
+          if (a.type === 'main' && b.type === 'main') {
+            connections.push({ kind: 'horizontal', a: a, b: b });
+          }
+        } else if (adr === 1 && adc === 1) {
+          if (a.type === 'main' && b.type === 'main') {
+            connections.push({ kind: 'diagonal', a: a, b: b });
+          }
+        }
+      }
+    }
+
+    /* 绿色修饰链（按列扫描连续绿色段） */
+    const chains = [];
+    for (let c = 0; c < size; c++) {
+      let r = 0;
+      while (r < size) {
+        if (isMod(r, c)) {
+          const start = r;
+          while (r < size && isMod(r, c)) r++;
+          const end = r - 1;
+          const aboveMain = start > 0 && isMain(start - 1, c) ? byKey.get((start - 1) * size + c) : null;
+          const belowMain = end < size - 1 && isMain(end + 1, c) ? byKey.get((end + 1) * size + c) : null;
+          const chainCells = [];
+          for (let rr = start; rr <= end; rr++) chainCells.push(byKey.get(rr * size + c));
+          const chain = {
+            c: c, start: start, end: end, cells: chainCells,
+            aboveMain: aboveMain, belowMain: belowMain, attachments: []
+          };
+          if (aboveMain) {
+            chain.attachments.push({
+              type: 'below',            /* 链位于该主干的下方 */
+              main: aboveMain,
+              order: chainCells.slice().reverse().concat([aboveMain]),
+              direction: 'bottom-up',
+              directionText: '自最下方朝主干向上'
+            });
+          }
+          if (belowMain) {
+            chain.attachments.push({
+              type: 'above',            /* 链位于该主干的上方 */
+              main: belowMain,
+              order: chainCells.concat([belowMain]),
+              direction: 'top-down',
+              directionText: '自最上方朝主干向下'
+            });
+          }
+          chains.push(chain);
+        } else {
+          r++;
+        }
+      }
+    }
+    chains.forEach(function (ch, i) { ch.label = 'C' + (i + 1); });
+
+    const paths = computeMainPaths(sortedMains, size);
+
+    return {
+      size: size, cells: cells, mains: sortedMains, mods: sortedMods,
+      connections: connections, chains: chains, paths: paths,
+      byKey: byKey
+    };
+  }
+
+  function mainAdjacent(a, b) {
+    const dr = Math.abs(a.r - b.r);
+    const dc = Math.abs(a.c - b.c);
+    return (dr === 0 && dc === 1) || (dr === 1 && dc === 1);
+  }
+
+  function computeMainPaths(mains, size) {
+    if (!mains.length) return { paths: [], count: 0, linear: false, roots: [] };
+    const allowed = mainAdjacent;
+    const roots = mains.filter(function (m) {
+      return !mains.some(function (o) { return o !== m && allowed(m, o) && o.c < m.c; });
+    });
+    const rootList = (roots.length ? roots : [mains.slice().sort(function (a, b) { return a.c - b.c || a.r - b.r; })[0]])
+      .slice().sort(function (a, b) { return a.c - b.c || a.r - b.r; });
+    const all = [];
+    const seen = new Set();
+    const visit = function (node, path) {
+      const next = mains.filter(function (o) {
+        return o !== node && allowed(node, o) && o.c > node.c && path.indexOf(o) < 0;
+      }).sort(function (a, b) { return a.c - b.c || a.r - b.r; });
+      if (!next.length) {
+        const key = path.map(function (m) { return m.label; }).join('>');
+        if (!seen.has(key) && path.length) { seen.add(key); all.push(path.slice()); }
+        return;
+      }
+      next.forEach(function (o) {
+        path.push(o);
+        visit(o, path);
+        path.pop();
+      });
+    };
+    rootList.forEach(function (r) { visit(r, [r]); });
+    const paths = all.slice(0, 24);
+    return { paths: paths, count: all.length, linear: all.length === 1, roots: rootList };
+  }
+
+  function cellCoord(cell) {
+    return '第' + (cell.r + 1) + '行第' + (cell.c + 1) + '列';
+  }
+
+  function cellRef(cell) {
+    return (cell.label || '') + '（' + cellCoord(cell) + '）';
+  }
+
+  function mainComponents(mains) {
+    if (!mains.length) return [];
+    const seen = new Set();
+    const comps = [];
+    mains.forEach(function (start) {
+      const key = start.r + ',' + start.c;
+      if (seen.has(key)) return;
+      const comp = [];
+      const stack = [start];
+      seen.add(key);
+      while (stack.length) {
+        const node = stack.pop();
+        comp.push(node);
+        mains.forEach(function (o) {
+          const k = o.r + ',' + o.c;
+          if (seen.has(k)) return;
+          if (mainAdjacent(node, o)) { seen.add(k); stack.push(o); }
+        });
+      }
+      comps.push(comp);
+    });
+    return comps;
+  }
+
+  function validateGrid() {
+    const a = analyzeGrid();
+    const errors = [];
+    const cells = a.cells;
+    if (!cells.length) {
+      return { errors: ['网格为空：请至少放置一个主干方块。'], analysis: a };
+    }
+    if (!a.mains.length) errors.push('至少需要一个主干方块（当前只有绿色修饰方块）。');
+
+    cells.forEach(function (cell) {
+      const typeLabel = cell.type === 'main' ? '主干方块' : '绿色修饰方块';
+      const ref = cell.label ? cell.label + '（' + cellCoord(cell) + '）' : cellCoord(cell);
+      if (!cell.index) {
+        errors.push(ref + '的' + typeLabel + '未填写抽牌序号。');
+      } else if (cell.index < 1 || cell.index > state.selection.length) {
+        errors.push(ref + '的抽牌序号「' + cell.index + '」超出本次抽牌范围（1–' + state.selection.length + '）。');
+      }
+    });
+
+    /* 主干不能直接上下相邻 */
+    for (let i = 0; i < a.mains.length; i++) {
+      for (let j = i + 1; j < a.mains.length; j++) {
+        const x = a.mains[i];
+        const y = a.mains[j];
+        if (Math.abs(x.r - y.r) === 1 && x.c === y.c) {
+          errors.push(x.label + '（' + cellCoord(x) + '）与' + y.label + '（' + cellCoord(y) + '）上下直接相邻：主干方块不能垂直相邻，只能水平或斜向相连。');
+        }
+      }
+    }
+
+    /* 主干连通性 */
+    if (a.mains.length > 1) {
+      const comps = mainComponents(a.mains);
+      if (comps.length > 1) {
+        errors.push('主干方块未形成单一连通结构，存在 ' + comps.length + ' 个互不相连的部分：' +
+          comps.map(function (comp, i) {
+            return '第' + (i + 1) + '部分（' + comp.map(function (m) { return m.label + ' ' + cellCoord(m); }).join('、') + '）';
+          }).join('；') + '。');
+      }
+    }
+
+    /* 绿色方块斜向相邻 */
+    for (let i = 0; i < a.mods.length; i++) {
+      for (let j = i + 1; j < a.mods.length; j++) {
+        const x = a.mods[i];
+        const y = a.mods[j];
+        if (Math.abs(x.r - y.r) === 1 && Math.abs(x.c - y.c) === 1) {
+          errors.push(x.label + '（' + cellCoord(x) + '）与' + y.label + '（' + cellCoord(y) + '）斜向相邻：绿色修饰方块只能通过垂直相邻构成修饰链。');
+        }
+      }
+    }
+
+    /* 修饰链是否挂接主干 */
+    a.chains.forEach(function (ch) {
+      if (!ch.aboveMain && !ch.belowMain) {
+        errors.push('第' + (ch.start + 1) + '–' + (ch.end + 1) + '行、第' + (ch.c + 1) + '列的绿色修饰链（' +
+          ch.cells.map(function (x) { return x.label; }).join('、') + '）没有连接到任何主干方块。');
+      }
+    });
+
+    /* 重复引用 */
+    if (!state.allowDup) {
+      const map = new Map();
+      cells.forEach(function (cell) {
+        if (!cell.index) return;
+        if (!map.has(cell.index)) map.set(cell.index, []);
+        map.get(cell.index).push(cell);
+      });
+      map.forEach(function (list, index) {
+        if (list.length > 1) {
+          errors.push('抽牌序号 ' + index + '（' + cardNameOfIndex(index) + '）被 ' + list.length +
+            ' 个方块重复引用：' + list.map(function (c) { return c.label + ' ' + cellCoord(c); }).join('、') + '。');
+        }
+      });
+    }
+
+    return { errors: errors, analysis: a };
+  }
+
+  function validateNow() {
+    const res = validateGrid();
+    const errors = res.errors;
+    const a = res.analysis;
+    el.gridErrors.innerHTML = a.cells.length ? errors.map(function (e) { return '<li>' + e + '</li>'; }).join('') : '';
+    if (!a.cells.length) {
+      el.gridOk.textContent = '网格为空：至少放置一个主干方块。';
+      el.gridOk.classList.add('is-bad');
+    } else if (errors.length) {
+      el.gridOk.textContent = '发现 ' + errors.length + ' 个结构问题（不会被自动修正）：';
+      el.gridOk.classList.add('is-bad');
+    } else {
+      const chainCount = a.chains.length;
+      const mainText = a.mains.length + ' 个主干方块' + (a.paths.count > 1 ? '（' + a.paths.count + ' 条阅读分支）' : '');
+      el.gridOk.textContent = '结构校验通过：' + mainText + '，' + chainCount + ' 条绿色修饰链，全部序号有效。';
+      el.gridOk.classList.remove('is-bad');
+    }
+    return errors;
+  }
+
+  /* ============================================================
+   * 13. 牌义弹层
+   * ========================================================== */
+  function openCardDetail(c) {
+    const dir = DIRS[c.dir];
+    let gridUse = '未使用';
+    const refs = [];
+    state.grid.cells.forEach(function (cell, i) {
+      if (!cell || cell.index !== c.drawIndex) return;
+      const size = state.grid.size;
+      refs.push((cell.type === 'main' ? '主干 ' : '修饰 ') + '第' + (Math.floor(i / size) + 1) + '行第' + (i % size + 1) + '列');
+    });
+    if (refs.length) gridUse = refs.join('、');
+    el.cardModalArt.innerHTML = ART.face(c.card);
+    el.cardModalInfo.innerHTML =
+      '<div class="cm-en">' + c.card.en + ' · ' + c.card.id + '</div>' +
+      '<h3 id="cardModalTitle">' + c.card.name + '</h3>' +
+      '<div class="cm-row"><span class="cm-dir">' + dir.label + ' · ' + dir.angle + '</span></div>' +
+      '<div class="cm-row"><b>方向语义：</b>' + dir.sem + '</div>' +
+      '<div class="cm-row"><b>基础关键词：</b>' + c.card.keywords.upright.join(' / ') + '</div>' +
+      '<div class="cm-row"><b>基础牌义：</b>' + c.card.meaning.upright + '</div>' +
+      '<div class="cm-row"><b>抽牌序号：</b>' + c.drawIndex + ' / ' + state.selection.length + '</div>' +
+      '<div class="cm-row"><b>网格使用：</b>' + gridUse + '</div>' +
+      '<div class="cm-row"><b>桌布坐标：</b>x=' + (c.x / SPACE).toFixed(3) + ', y=' + (c.y / SPACE).toFixed(3) + '</div>';
+    openModal(el.cardModal);
+  }
+
+  /* ============================================================
+   * 14. 导出：文字
+   * ========================================================== */
+  function buildExportText() {
+    const a = analyzeGrid();
+    const errors = validateGrid().errors;
+    const q = el.question.value.trim();
+    const out = [];
+    const push = function () {
+      for (let i = 0; i < arguments.length; i++) out.push(arguments[i]);
+    };
+
+    push('════════════ 空间塔罗 · 思维语法系统 · 解读资料 ════════════');
+    push('生成时间：' + stamp() + '（本地时间）');
+    push('规则版本：' + RULES.version);
+    push('卡牌来源：标准塔罗 78 张（大阿卡纳 22 + 小阿卡纳 56），牌面由程序生成。');
+    push('');
+
+    push('【一】用户原始问题');
+    push(q || '（用户未填写问题）');
+    push('');
+
+    push('【二】补充信息（用户自行填写，未填则留空）');
+    push('预测对象：' + (el.extraSubject.value.trim() || '（未填写）'));
+    push('关注时间范围：' + (el.extraRange.value.trim() || '（未填写）'));
+    push('补充背景：' + (el.extraContext.value.trim() || '（未填写）'));
+    push('');
+
+    push('【三】系统规则说明');
+    push('3.0 洗牌与初始随机分布（随机化机制，不参与解读）');
+    push('- 本系统的「洗牌」等价于初始化时 78 张牌在桌布上的随机分布；它只决定用户点击时遇到哪张牌，属于随机化机制，不承载象征意义。');
+    push('- 洗牌过程、初始分布以及卡牌在桌布上的坐标都不参与解读。');
+    push('- 解读只依据：用户问题与补充信息、五个思维操作的操作历史、用户实际点击顺序（抽牌顺序）、每张牌被冻结时的最终方向、以及用户在语法网格中构造的结构。');
+    push('- 因此不要把牌与牌的距离、聚集程度、位置远近或初始分布当作征兆，也不要据此推断吉凶。');
+    push('3.1 卡牌四向语义（方向是解释时必须遵守的语义属性，不是单纯视觉旋转）');
+    push('- 正向（upright，0°）：保留该牌的基础寓意。');
+    push('- 逆向（reversed，180°）：该牌基础寓意朝相反方向解释。');
+    push('- 向内（inward，270°，即逆时针 90°）：向内回溯、内在化、尚未显化。');
+    push('- 向外（outward，90°，即顺时针 90°）：推进、显化、能量向外作用。');
+    push('  向内、向外不是普通逆位，不能直接解释为基础牌义的反面；具体含义仍需结合牌义与整体结构。');
+    push('  程序内部以离散状态保存四向，不以任意角度表示语义。');
+    push('3.2 五个思维操作按钮');
+    push('- 心绪／欲求：以点击节奏与累积次数表达当下心情与欲求，驱动全部 78 张牌在整块桌布内做大幅度随机位移与频繁的离散方向变化；节奏越快，混沌运动越强（单次位移上限受控），牌会被甩到桌布的不同区域。');
+    push('- 发散／探索：全部牌彼此排斥，靠得越近排斥越强，使可能性展开、差异显现；不表示现实中已经发生冲突。');
+    push('- 皈依／实在：全部牌彼此吸引，形成局部聚集，把抽象可能性收束为具体结构；吸引不必然代表积极结果。');
+    push('- 反转／否定：每次点击令全部 78 张牌的方向整体反转 180°，并记录本次的语义模式（三选一）。');
+    push('- 推进／演化：沿桌布上标示的「时间推进」方向（从左向右）产生共同位移，表达对过程与阶段变化的关注；它不会把牌的方向改成向外，也不代表事情一定顺利。');
+    push('3.3 心绪／欲求：点击速度与累积次数规则');
+    push('- 快速：与上一次点击的间隔小于 ' + RULES.fastMs + ' 毫秒。');
+    push('- 中速：间隔 ' + RULES.fastMs + '–' + RULES.slowMs + ' 毫秒。');
+    push('- 缓慢：间隔大于 ' + RULES.slowMs + ' 毫秒。');
+    push('- 第一次点击没有可比较的间隔，使用默认基础强度 ' + RULES.defaultIntensity.toFixed(2) + '，并同样乘以累积系数（0.72–1.00）。');
+    push('- 累积点击次数对运动强度产生有限影响（系数 0.72–1.00），不会无限增长，也不会让牌面失控。');
+    push('- 位移是全局的：每张牌会被甩向桌布任意方向，多次快速点击会让整副牌在大范围内重新分布；接近边界时按镜面反射折回，牌不会越出桌布。');
+    push('- 卡牌碰撞体积很小（只保留刚好完全重叠的最小间隔），允许牌在混沌运动中自然叠放，但不会完全重合。');
+    push('- 点击节奏与次数只是预测者主动输入的象征性表达，不构成心理诊断，也不直接代表预测结果的好坏。');
+    push('3.4 发散／探索：排斥运动规则');
+    push('- 计算牌与牌之间的距离，距离越近排斥越强，所有 78 张牌共同参与。');
+    push('- 位移后有边界约束与最小间距约束，牌不会越出桌布，也不会永久重叠到无法选择。');
+    push('- 可引发有限的方向变化；排斥只表示展开与区分，不表示现实冲突。');
+    push('3.5 皈依／实在：吸引运动规则');
+    push('- 全部牌向局部聚集中心靠近，形成若干局部聚集，所有牌共同参与。');
+    push('- 存在最小间距与防重叠机制，牌不会被压缩到同一点。');
+    push('- 可引发有限的方向变化；吸引可能意味着联系，也可能意味着依赖、束缚或过度聚合。');
+    push('3.6 反转／否定：三种语义模式');
+    push('- 模式 A 反向探索：探索某个方向的相反可能性，纳入相反发展方向的考察；不是直接把最终答案判定为相反结果。');
+    push('- 模式 B 否定质疑：质疑已有判断或未经证实的前提，重新检视假设是否成立；不删除原始问题，也不机械改写问题文本。');
+    push('- 模式 C 转折转向：在操作过程中引入转折点，关注趋势是否发生阶段转换；程序记录转折发生的操作序号，前後操作按时间顺序比较。多次使用该模式时分别记录，不合并为一个转折。');
+    push('  选择模式只决定本次操作的语义标签，不会取消全局翻转效果。');
+    push('3.7 全局翻转算法');
+    push('- 正向 ↔ 逆向；向内 ↔ 向外。');
+    push('- 视觉角度：0° ↔ 180°；90° ↔ 270°。');
+    push('- 每次点击反转按钮，全部 78 张牌的方向状态整体反转 180°，空间坐标不变。');
+    push('- 反转两次后方向回到反转前的状态，但两次操作都完整保留在操作历史中。');
+    push('3.8 反转历史与单张牌最终牌义的区别');
+    push('- 单张牌的最终方向用于解释该牌本身。');
+    push('- 反转操作历史用于理解用户希望采用的视角、质疑或转折框架。');
+    push('- 不会因为用户点击过反转按钮，就在单张牌的最终方向之外再对牌义取反一次，避免重复反转。');
+    push('3.9 推进／演化');
+    push('- 桌布上以「时间推进」箭头标示从左向右的时间方向。');
+    push('- 每次点击让全部牌沿该方向产生有限位移，不同牌位移量略有差异，并保留空间分布。');
+    push('- 位移在接近桌布右边界时自动衰减，避免牌群整体挤在最右侧。');
+    push('- 推进与反转相互独立：推进表达过程展开，反转表达方向逆转、否定或转折意图。');
+    push('3.10 主干方块（M，棕黄色）规则');
+    push('- 主干方块表达主要语义，主要阅读方向为从左向右。');
+    push('- 主干方块可以水平相邻，也可以斜向相邻。');
+    push('- 主干方块不能直接上下相邻。');
+    push('- 所有主干方块必须通过允许的连接方式形成一个连通结构；允许出现分支，分支不会被压缩成线性句子。');
+    push('- 每个主干方块都必须填写一个有效的抽牌序号（本次抽牌的第几张牌）。');
+    push('3.11 绿色修饰方块（G）规则');
+    push('- 绿色方块用于修饰、补充、限定或改变主干语句的解释。');
+    push('- 绿色方块只能通过垂直相邻构成修饰链，不能通过斜向相邻建立连接。');
+    push('- 每条修饰链必须与一个或多个明确的主干方块垂直关联，不允许存在与主干断开的孤立修饰链。');
+    push('- 每个绿色方块都必须填写有效的抽牌序号。');
+    push('3.12 修饰链阅读规则');
+    push('- 上方修饰链：从最上方开始，按从上到下的顺序读取，最终朝向主干（… → G2 → G1 → M）。');
+    push('- 下方修饰链：从最下方开始，按从下到上的顺序读取，最终朝向主干（… → G4 → G3 → M）。');
+    push('- 上下同时存在修饰链：可能表示权衡、双重限定、相互补充、不同方向的影响或潜在张力；程序不预设上下哪一侧为正或为负，也不自动判定冲突。');
+    push('');
+
+    push('【四】操作历史（按发生顺序，共 ' + state.events.length + ' 次）');
+    if (!state.events.length) {
+      push('本次没有任何思维操作。');
+    } else {
+      const counts = OP_LABELS;
+      push('按按钮统计：' + Object.keys(state.counts).map(function (k) {
+        return counts[k] + ' ' + state.counts[k] + ' 次';
+      }).join('；') + '。');
+      push('');
+      state.events.forEach(function (ev) {
+        let head = '事件' + ev.seq + '｜' + OP_LABELS[ev.type];
+        if (ev.type === 'emotion') {
+          head += '｜速度：' + SPEED_LABELS[ev.speed] +
+            (ev.intervalMs != null ? '（与上次间隔 ' + ev.intervalMs + ' ms）' : '（首次点击）') +
+            '｜混沌强度：' + ev.intensity.toFixed(2) +
+            '｜该按钮累计：' + ev.clickCountType + ' 次';
+        } else if (ev.type === 'reverse') {
+          head += '｜模式：' + REVERSE_MODES[ev.mode].label +
+            '｜累计反转：' + ev.flipCount + ' 次' +
+            (ev.mode === 'turn' ? '｜转折标记：事件' + ev.seq : '');
+        } else {
+          head += '｜该按钮累计：' + ev.clickCountType + ' 次' +
+            (ev.intervalMs != null ? '｜与上次间隔 ' + ev.intervalMs + ' ms' : '');
+        }
+        head += '｜累计操作：' + ev.clickCountTotal + ' 次';
+        push(head);
+        push('  方向状态：' + digestText(ev.dirBefore) + ' → ' + digestText(ev.dirAfter) + '（正向 / 逆向 / 向内 / 向外）');
+      });
+
+      const reverses = state.events.filter(function (e) { return e.type === 'reverse'; });
+      if (reverses.length) {
+        push('');
+        push('反转操作明细（每次反转独立记录，不合并）：');
+        reverses.forEach(function (ev, i) {
+          push('- 第 ' + (i + 1) + ' 次反转：事件' + ev.seq + '，模式「' + REVERSE_MODES[ev.mode].label + '」，' +
+            '翻转前 ' + digestText(ev.dirBefore) + '，翻转后 ' + digestText(ev.dirAfter) + '，累计反转 ' + ev.flipCount + ' 次。');
+        });
+        const turns = reverses.filter(function (e) { return e.mode === 'turn'; });
+        if (turns.length) {
+          push('转折标记：' + turns.map(function (e) { return '事件' + e.seq; }).join('、') +
+            '（模式为「转折转向」；其后的操作发生在这些转折标记之后）。');
+        }
+      }
+      const advances = state.events.filter(function (e) { return e.type === 'advance'; });
+      if (advances.length) {
+        push('');
+        push('推进／演化操作位置：' + advances.map(function (e) { return '事件' + e.seq; }).join('、') + '。');
+      }
+      const speeds = state.events.filter(function (e) { return e.type === 'emotion'; })
+        .map(function (e) { return e.speed; });
+      if (speeds.length) {
+        const fast = speeds.filter(function (s) { return s === 'fast'; }).length;
+        const mid = speeds.filter(function (s) { return s === 'medium'; }).length;
+        const slow = speeds.filter(function (s) { return s === 'slow'; }).length;
+        const first = speeds.filter(function (s) { return s === 'first'; }).length;
+        push('心绪／欲求节奏分布：快速 ' + fast + ' 次、中速 ' + mid + ' 次、缓慢 ' + slow + ' 次' +
+          (first ? '、首次 ' + first + ' 次' : '') + '。');
+      }
+    }
+    push('');
+
+    push('【五】本次抽牌清单（按实际点击顺序，共 ' + state.selection.length + ' 张）');
+    push('（说明：卡牌在桌布上的位置由初始随机分布决定，属于随机化背景，不参与解读；以下只记录点击顺序、最终方向、基础牌义与网格使用情况。）');
+    if (!state.selection.length) {
+      push('（没有抽取任何卡牌）');
+    } else {
+      state.selection.forEach(function (uid, i) {
+        const c = cardByUid(uid);
+        const dir = DIRS[c.dir];
+        push((i + 1) + '. ' + c.card.name + '（' + c.card.en + '）');
+        push('   卡牌唯一ID：' + c.card.id + '（牌堆序号 ' + (c.uid + 1) + '）');
+        push('   基础关键词：' + c.card.keywords.upright.join(' / '));
+        push('   基础牌义：' + (c.card.meaning && c.card.meaning.upright ? c.card.meaning.upright : '牌库未提供'));
+        push('   最终方向：' + dir.label + '（' + dir.angle + '）—— ' + dir.sem + '。');
+        push('   方向说明：先保留上列基础牌义，再结合实际方向理解；方向不改变牌名与牌库数据。');
+        const uses = [];
+        state.grid.cells.forEach(function (cell, idx) {
+          if (!cell || cell.index !== (i + 1)) return;
+          const size = state.grid.size;
+          uses.push((cell.type === 'main' ? '主干方块' : '绿色修饰方块') + '（第' + (Math.floor(idx / size) + 1) + '行第' + (idx % size + 1) + '列）');
+        });
+        push('   网格中的使用情况：' + (uses.length ? uses.join('、') : '未使用'));
+        push('');
+      });
+    }
+
+    push('【六】自定义语法网格结构');
+    push('网格尺寸：' + a.size + ' × ' + a.size);
+    push('坐标规则：行号从上往下递增（第 1 行为最上方），列号从左往右递增（第 1 列为最左方）。');
+    push('');
+    if (!a.cells.length) {
+      push('（网格为空）');
+    } else {
+      push('主干方块（M）：');
+      a.mains.forEach(function (m) {
+        push(m.label + '：' + cellCoord(m) + '，抽牌序号 ' + (m.index || '未填写') +
+          '（' + (cardNameOfIndex(m.index) || '无效序号') + '，' + (m.index && m.index <= state.selection.length ? DIRS[cardByUid(state.selection[m.index - 1]).dir].label : '—') + '）。');
+      });
+      push('');
+      push('修饰方块（G）：');
+      if (!a.mods.length) {
+        push('（无绿色修饰方块）');
+      } else {
+        a.mods.forEach(function (m) {
+          const chain = a.chains.filter(function (ch) {
+            return ch.cells.some(function (x) { return x.key === m.key; });
+          })[0];
+          push(m.label + '：' + cellCoord(m) + '，抽牌序号 ' + (m.index || '未填写') +
+            '（' + (cardNameOfIndex(m.index) || '无效序号') + '），所在修饰链：' + (chain ? chain.label : '—') + '。');
+        });
+      }
+      push('');
+      push('连接关系：');
+      if (!a.connections.length) {
+        push('（没有已建立的连接关系）');
+      } else {
+        a.connections.forEach(function (cn) {
+          const kindText = cn.kind === 'horizontal' ? '水平相连' :
+            cn.kind === 'diagonal' ? '斜向相连' :
+              cn.kind === 'vertical-attach' ? '垂直相连（修饰链与主干）' : '垂直相连（同一修饰链内）';
+          const x = cn.a.label || '';
+          const y = cn.b.label || '';
+          push('- ' + x + '（' + cellCoord(cn.a) + '）与 ' + y + '（' + cellCoord(cn.b) + '）' + kindText + '。');
+        });
+      }
+      push('');
+      push('修饰链与读取顺序：');
+      if (!a.chains.length) {
+        push('（无修饰链）');
+      } else {
+        a.chains.forEach(function (ch) {
+          push(ch.label + '：第' + (ch.start + 1) + '–' + (ch.end + 1) + '行、第' + (ch.c + 1) + '列，共 ' + ch.cells.length + ' 格。');
+          ch.attachments.forEach(function (at) {
+            push('  - ' + (at.type === 'above' ? '上方修饰链' : '下方修饰链') + '，关联 ' + cellRef(at.main) +
+              '，读取方向：' + at.directionText + '，读取顺序：' + at.order.map(function (x) { return x.label; }).join(' → ') + '。');
+          });
+          if (ch.aboveMain && ch.belowMain) {
+            push('  - 该修饰链同时位于 ' + cellRef(ch.aboveMain) + ' 下方与 ' + cellRef(ch.belowMain) +
+              ' 上方，连接两个主干方块（可能表示权衡、双重限定、相互补充或潜在冲突，由解读方判断，程序不预设结论）。');
+          }
+        });
+        const doubleSide = [];
+        a.mains.forEach(function (m) {
+          const above = a.chains.filter(function (ch) { return ch.belowMain && ch.belowMain.key === m.key; });
+          const below = a.chains.filter(function (ch) { return ch.aboveMain && ch.aboveMain.key === m.key; });
+          if (above.length && below.length) {
+            doubleSide.push(m.label + '（' + cellCoord(m) + '）上方修饰链 ' + above.map(function (c) { return c.label; }).join('、') +
+              ' 与下方修饰链 ' + below.map(function (c) { return c.label; }).join('、') + ' 同时存在');
+          }
+        });
+        if (doubleSide.length) {
+          push('');
+          push('双侧修饰：' + doubleSide.join('；') + '。');
+        }
+      }
+      push('');
+      push('主干阅读顺序：');
+      if (!a.mains.length) {
+        push('（无主干方块）');
+      } else if (!a.paths.paths.length) {
+        push('（无法计算阅读顺序：主干结构存在问题）');
+      } else if (a.paths.linear) {
+        push('- 主干为单一线性结构：' + a.paths.paths[0].map(function (m) { return m.label; }).join(' → ') + '。');
+      } else {
+        a.paths.paths.forEach(function (p, i) {
+          push('- 主干分支路径 ' + (i + 1) + '：' + p.map(function (m) { return m.label; }).join(' → ') + '。');
+        });
+        if (a.paths.count > a.paths.paths.length) {
+          push('- （阅读路径超过 ' + a.paths.paths.length + ' 条，仅列出前 ' + a.paths.paths.length + ' 条）');
+        }
+      }
+      push('');
+      push('网格校验：' + (errors.length ? '未通过，发现 ' + errors.length + ' 个问题：' : '全部通过。'));
+      errors.forEach(function (e) { push('  - ' + e); });
+    }
+    push('');
+
+    push('【七】资料完整性说明');
+    push('- 本资料全部读取自程序当前真实状态，没有使用任何示例数据。');
+    push('- 本次抽取 ' + state.selection.length + ' 张牌，牌名与基础牌义来自同一套 78 张卡牌数据模型。');
+    push('- 方向、操作历史、网格结构与校验结果均来自当前状态。');
+    push('- 洗牌与初始随机分布已标记为随机化背景，未写入任何解读依据；桌布坐标不参与解读。');
+    push('- 缺失项：无。');
+    push('');
+
+    push('【八】给外部 AI 的解读指导（固定指令）');
+    push(AI_GUIDE);
+
+    return out.join('\n');
+  }
+
+  function generateOutput() {
+    const errors = validateGrid().errors;
+    const run = function () {
+      state.outputText = buildExportText();
+      state.generatedAt = new Date();
+      state.stale = false;
+      el.outputText.textContent = state.outputText;
+      el.copyBtn.disabled = false;
+      el.pngBtn.disabled = false;
+      el.jsonBtn.disabled = false;
+      updateSections();
+      updateStage();
+      toast('解读资料已生成（' + state.outputText.length + ' 字）。');
+      el.exportSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+    if (errors.length) {
+      confirmDialog('网格存在 ' + errors.length + ' 个结构问题',
+        '当前网格未通过校验。仍然可以生成资料，资料中会明确标注结构问题，不会自动修改你的结构。是否继续生成？',
+        '仍然生成', '取消').then(function (ok) { if (ok) run(); });
+    } else {
+      run();
+    }
+  }
+
+  function copyOutput() {
+    const text = el.outputText.textContent;
+    if (!text || !state.generatedAt) { toast('请先生成解读资料。'); return; }
+    const fallback = function () {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      let ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+      ta.remove();
+      if (ok) {
+        toast('已复制全部文字（' + text.length + ' 字）');
+      } else {
+        try {
+          const range = document.createRange();
+          range.selectNodeContents(el.outputText);
+          const sel = window.getSelection();
+          sel.removeAllRanges();
+          sel.addRange(range);
+        } catch (e) { /* ignore */ }
+        toast('浏览器拒绝了自动复制，已为你选中全部文字，请按 Ctrl / ⌘ + C 复制。');
+      }
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () {
+        toast('已复制全部文字（' + text.length + ' 字）');
+      }).catch(fallback);
+    } else {
+      fallback();
+    }
+  }
+
+  /* ============================================================
+   * 15. 导出：PNG
+   * ========================================================== */
+  function wrapText(ctx, text, maxWidth) {
+    const chars = String(text).split('');
+    const lines = [];
+    let line = '';
+    chars.forEach(function (ch) {
+      if (ch === '\n') { lines.push(line); line = ''; return; }
+      const test = line + ch;
+      if (ctx.measureText(test).width > maxWidth && line) {
+        lines.push(line);
+        line = ch;
+      } else {
+        line = test;
+      }
+    });
+    if (line) lines.push(line);
+    return lines;
+  }
+
+  function ellipsis(ctx, text, maxWidth) {
+    if (ctx.measureText(text).width <= maxWidth) return text;
+    let s = text;
+    while (s.length > 1 && ctx.measureText(s + '…').width > maxWidth) s = s.slice(0, -1);
+    return s + '…';
+  }
+
+  function roundRect(ctx, x, y, w, h, r) {
+    if (typeof ctx.roundRect === 'function') {
+      ctx.beginPath();
+      ctx.roundRect(x, y, w, h, r);
+      return;
+    }
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  function buildGridCanvas() {
+    const a = analyzeGrid();
+    const n = state.grid.size;
+    const W = 1600;
+    const padX = 56;
+    const rightW = 470;
+    const gap = 8;
+    const gridArea = W - padX * 2 - rightW;
+    const cell = Math.max(56, Math.floor((gridArea - (n - 1) * gap) / n));
+    const gridH = n * cell + (n - 1) * gap;
+    const gridTop = 236;
+    const H = Math.max(940, gridTop + gridH + 120);
+    const dpr = 2;
+
+    const cv = document.createElement('canvas');
+    cv.width = W * dpr;
+    cv.height = H * dpr;
+    const ctx = cv.getContext('2d');
+    ctx.scale(dpr, dpr);
+    ctx.textBaseline = 'top';
+
+    /* 背景 */
+    const bg = ctx.createLinearGradient(0, 0, W, H);
+    bg.addColorStop(0, '#100c20');
+    bg.addColorStop(0.55, '#0a0716');
+    bg.addColorStop(1, '#07050e');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, W, H);
+
+    /* 装饰圆 */
+    for (let i = 0; i < 5; i++) {
+      ctx.beginPath();
+      ctx.arc(W * 0.78, H * 0.22, 90 + i * 46, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(226,193,124,' + (0.05 - i * 0.008) + ')';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+
+    /* 边框 */
+    ctx.strokeStyle = 'rgba(226,193,124,0.28)';
+    ctx.lineWidth = 1.5;
+    roundRect(ctx, 18, 18, W - 36, H - 36, 18);
+    ctx.stroke();
+
+    /* 标题 */
+    ctx.fillStyle = '#f3dfa9';
+    ctx.font = '600 34px "Songti SC","STSong","SimSun",serif';
+    ctx.fillText('空间塔罗 · 语法网格', padX, 52);
+    ctx.font = '13px "PingFang SC","Microsoft YaHei",sans-serif';
+    ctx.fillStyle = 'rgba(226,193,124,0.72)';
+    ctx.fillText('规则版本 ' + RULES.version + '　·　生成于 ' + stamp(), padX, 100);
+
+    /* 问题 */
+    const q = el.question.value.trim() || '（用户未填写问题）';
+    ctx.font = '15px "PingFang SC","Microsoft YaHei",sans-serif';
+    ctx.fillStyle = 'rgba(239,231,212,0.9)';
+    const qLines = wrapText(ctx, '问题：' + q, gridArea).slice(0, 3);
+    qLines.forEach(function (line, i) {
+      ctx.fillText(line, padX, 132 + i * 24);
+    });
+
+    /* 列号 / 行号 */
+    const x0 = padX;
+    const y0 = gridTop;
+    ctx.font = '11px "PingFang SC","Microsoft YaHei",sans-serif';
+    ctx.fillStyle = 'rgba(156,147,178,0.9)';
+    ctx.textAlign = 'center';
+    for (let c = 0; c < n; c++) {
+      ctx.fillText(String(c + 1), x0 + c * (cell + gap) + cell / 2, y0 - 20);
+    }
+    ctx.textAlign = 'right';
+    for (let r = 0; r < n; r++) {
+      ctx.textBaseline = 'middle';
+      ctx.fillText(String(r + 1), x0 - 14, y0 + r * (cell + gap) + cell / 2);
+    }
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+
+    /* 格子 */
+    for (let r = 0; r < n; r++) {
+      for (let c = 0; c < n; c++) {
+        const x = x0 + c * (cell + gap);
+        const y = y0 + r * (cell + gap);
+        const data = state.grid.cells[r * n + c];
+        roundRect(ctx, x, y, cell, cell, 9);
+        if (!data) {
+          ctx.fillStyle = 'rgba(255,255,255,0.025)';
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(255,255,255,0.09)';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+          continue;
+        }
+        const isMain = data.type === 'main';
+        const grad = ctx.createLinearGradient(x, y, x + cell, y + cell);
+        if (isMain) {
+          grad.addColorStop(0, 'rgba(192,138,69,0.55)');
+          grad.addColorStop(1, 'rgba(120,78,32,0.42)');
+        } else {
+          grad.addColorStop(0, 'rgba(95,156,109,0.55)');
+          grad.addColorStop(1, 'rgba(48,94,60,0.42)');
+        }
+        ctx.fillStyle = grad;
+        ctx.fill();
+        ctx.strokeStyle = isMain ? 'rgba(226,174,102,0.9)' : 'rgba(130,206,150,0.9)';
+        ctx.lineWidth = 1.4;
+        ctx.stroke();
+
+        const label = isMain
+          ? a.mains.filter(function (m) { return m.r === r && m.c === c; })[0].label
+          : a.mods.filter(function (m) { return m.r === r && m.c === c; })[0].label;
+        ctx.fillStyle = isMain ? 'rgba(255,225,180,0.85)' : 'rgba(206,246,214,0.85)';
+        ctx.font = '10px "PingFang SC","Microsoft YaHei",sans-serif';
+        ctx.fillText(label, x + 7, y + 7);
+
+        ctx.fillStyle = '#fff2d8';
+        ctx.font = '600 ' + Math.round(cell * 0.28) + 'px "Songti SC","STSong","SimSun",serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(String(data.index || '?'), x + cell / 2, y + cell * 0.48);
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+
+        if (data.index && data.index <= state.selection.length) {
+          const c2 = cardByUid(state.selection[data.index - 1]);
+          ctx.fillStyle = 'rgba(255,255,255,0.78)';
+          ctx.font = '11px "PingFang SC","Microsoft YaHei",sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText(ellipsis(ctx, c2.card.name, cell - 14), x + cell / 2, y + cell * 0.74);
+          ctx.textAlign = 'left';
+        }
+      }
+    }
+
+    /* 右侧信息栏 */
+    let rx = padX + gridArea + 48;
+    let ry = gridTop - 20;
+    ctx.fillStyle = '#f3dfa9';
+    ctx.font = '600 17px "Songti SC","STSong","SimSun",serif';
+    ctx.fillText('图例', rx, ry);
+    ry += 30;
+    const legend = [
+      { color: 'rgba(192,138,69,0.85)', border: 'rgba(226,174,102,0.95)', text: '主干方块 M（从左向右阅读）' },
+      { color: 'rgba(95,156,109,0.85)', border: 'rgba(130,206,150,0.95)', text: '绿色修饰方块 G（垂直修饰链）' },
+      { color: 'rgba(255,255,255,0.05)', border: 'rgba(255,255,255,0.2)', text: '空白格子' }
+    ];
+    legend.forEach(function (lg) {
+      ctx.beginPath();
+      ctx.rect(rx, ry, 15, 15);
+      ctx.fillStyle = lg.color;
+      ctx.fill();
+      ctx.strokeStyle = lg.border;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(239,231,212,0.82)';
+      ctx.font = '12px "PingFang SC","Microsoft YaHei",sans-serif';
+      ctx.fillText(lg.text, rx + 24, ry + 2);
+      ry += 26;
+    });
+
+    ry += 16;
+    ctx.fillStyle = '#f3dfa9';
+    ctx.font = '600 17px "Songti SC","STSong","SimSun",serif';
+    ctx.fillText('抽牌清单（序号 → 牌名 · 方向）', rx, ry);
+    ry += 28;
+    ctx.font = '12px "PingFang SC","Microsoft YaHei",sans-serif';
+    const maxRows = Math.floor((H - ry - 96) / 21);
+    state.selection.slice(0, maxRows).forEach(function (uid, i) {
+      const c = cardByUid(uid);
+      ctx.fillStyle = 'rgba(239,231,212,0.85)';
+      ctx.fillText(String(i + 1).padStart(2, '0') + '　' + ellipsis(ctx, c.card.name, 130) + '　' + DIRS[c.dir].label, rx, ry);
+      ry += 21;
+    });
+    if (state.selection.length > maxRows) {
+      ctx.fillStyle = 'rgba(156,147,178,0.8)';
+      ctx.fillText('… 共 ' + state.selection.length + ' 张', rx, ry);
+      ry += 21;
+    }
+
+    /* 操作摘要 */
+    ry += 12;
+    ctx.fillStyle = '#f3dfa9';
+    ctx.font = '600 17px "Songti SC","STSong","SimSun",serif';
+    ctx.fillText('思维操作摘要', rx, ry);
+    ry += 28;
+    ctx.font = '12px "PingFang SC","Microsoft YaHei",sans-serif';
+    Object.keys(OP_LABELS).forEach(function (k) {
+      ctx.fillStyle = 'rgba(239,231,212,0.8)';
+      ctx.fillText(OP_LABELS[k] + '：' + state.counts[k] + ' 次', rx, ry);
+      ry += 21;
+    });
+    ctx.fillStyle = 'rgba(156,147,178,0.85)';
+    ctx.fillText('累计反转：' + state.flipCount + ' 次 · 累计操作：' + totalClicks() + ' 次', rx, ry);
+
+    /* 底部 */
+    ctx.fillStyle = 'rgba(156,147,178,0.7)';
+    ctx.font = '11px "PingFang SC","Microsoft YaHei",sans-serif';
+    ctx.fillText('本图由程序依据当前真实网格绘制，用于辅助理解结构；文字结构记录才是核心资料。', padX, H - 42);
+    ctx.fillText('空间塔罗 · 思维语法系统　' + RULES.version, padX, H - 24);
+
+    return cv;
+  }
+
+  function exportPng() {
+    if (state.phase !== 'revealed') { toast('揭示牌面后才能导出网格图片。'); return; }
+    try {
+      const cv = buildGridCanvas();
+      cv.toBlob(function (blob) {
+        if (!blob) { toast('图片生成失败。'); return; }
+        downloadBlob(blob, 'tarot-grid-' + fileStamp() + '.png');
+        toast('网格 PNG 已导出。');
+      }, 'image/png');
+    } catch (e) {
+      toast('图片导出失败：' + e.message);
+    }
+  }
+
+  function downloadBlob(blob, name) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 3000);
+  }
+
+  /* ============================================================
+   * 16. 导出：JSON
+   * ========================================================== */
+  function buildStateJson() {
+    const a = analyzeGrid();
+    const errors = validateGrid().errors;
+    const cells = [];
+    for (let r = 0; r < a.size; r++) {
+      for (let c = 0; c < a.size; c++) {
+        const data = state.grid.cells[r * a.size + c];
+        if (!data) continue;
+        const label = data.type === 'main'
+          ? (a.mains.filter(function (m) { return m.r === r && m.c === c; })[0] || {}).label
+          : (a.mods.filter(function (m) { return m.r === r && m.c === c; })[0] || {}).label;
+        cells.push({
+          row: r + 1, col: c + 1,
+          type: data.type,
+          label: label || null,
+          drawIndex: data.index || null
+        });
+      }
+    }
+    return {
+      app: '空间塔罗 · 思维语法系统',
+      rulesVersion: RULES.version,
+      semantics: {
+        shuffle: 'initial-random-layout',
+        shuffleIsRandom: true,
+        positionsAreInterpreted: false,
+        note: '洗牌 / 初始随机分布属于随机化机制，不参与解读；牌坐标仅作为技术状态保留，不应据此解读。'
+      },
+      generatedAt: new Date().toISOString(),
+      question: {
+        text: el.question.value.trim(),
+        subject: el.extraSubject.value.trim(),
+        timeRange: el.extraRange.value.trim(),
+        context: el.extraContext.value.trim()
+      },
+      phase: state.phase,
+      stats: {
+        totalOperations: totalClicks(),
+        counts: clone(state.counts),
+        reversalCount: state.flipCount,
+        drawnCount: state.selection.length
+      },
+      operations: state.events.map(function (ev) {
+        return {
+          seq: ev.seq,
+          type: ev.type,
+          label: OP_LABELS[ev.type],
+          mode: ev.mode,
+          modeLabel: ev.mode ? REVERSE_MODES[ev.mode].label : null,
+          timestamp: ev.at instanceof Date ? ev.at.toISOString() : ev.at,
+          elapsedMs: ev.elapsedMs,
+          intervalMs: ev.intervalMs,
+          speed: ev.speed,
+          intensity: ev.intensity,
+          clickCountType: ev.clickCountType,
+          clickCountTotal: ev.clickCountTotal,
+          flipCount: ev.flipCount,
+          dirBefore: ev.dirBefore,
+          dirAfter: ev.dirAfter,
+          cardsBefore: ev.cardsBefore,
+          cardsAfter: ev.cardsAfter
+        };
+      }),
+      cards: state.cards.map(function (c) {
+        return {
+          uid: c.uid,
+          id: c.card.id,
+          name: c.card.name,
+          en: c.card.en,
+          arcana: c.card.arcana,
+          suit: c.card.suit,
+          rank: c.card.rank,
+          element: c.card.element,
+          astro: c.card.astro,
+          baseKeywords: c.card.keywords.upright,
+          baseMeaning: c.card.meaning.upright,
+          x: +(c.x / SPACE).toFixed(4),
+          y: +(c.y / SPACE).toFixed(4),
+          direction: c.dir,
+          angleDeg: DIRS[c.dir].deg,
+          directionSemantics: DIRS[c.dir].sem,
+          selected: c.selected,
+          drawIndex: c.drawIndex
+        };
+      }),
+      drawn: state.selection.map(function (uid, i) {
+        const c = cardByUid(uid);
+        return {
+          drawIndex: i + 1,
+          uid: c.uid,
+          id: c.card.id,
+          name: c.card.name,
+          direction: c.dir,
+          angleDeg: DIRS[c.dir].deg,
+          x: +(c.x / SPACE).toFixed(4),
+          y: +(c.y / SPACE).toFixed(4)
+        };
+      }),
+      grid: {
+        size: a.size,
+        cells: cells,
+        mainConnections: a.connections.filter(function (cn) { return cn.kind !== 'vertical-chain' && cn.kind !== 'vertical-attach'; })
+          .map(function (cn) {
+            return { a: cn.a.label, b: cn.b.label, kind: cn.kind };
+          }),
+        chains: a.chains.map(function (ch) {
+          return {
+            label: ch.label,
+            column: ch.c + 1,
+            fromRow: ch.start + 1,
+            toRow: ch.end + 1,
+            cells: ch.cells.map(function (x) { return x.label; }),
+            attachments: ch.attachments.map(function (at) {
+              return {
+                side: at.type,
+                main: at.main.label,
+                mainRow: at.main.r + 1,
+                mainCol: at.main.c + 1,
+                readDirection: at.directionText,
+                readOrder: at.order.map(function (x) { return x.label; })
+              };
+            })
+          };
+        }),
+        readingPaths: a.paths.paths.map(function (p) {
+          return p.map(function (m) { return m.label; });
+        }),
+        validation: { ok: errors.length === 0, errors: errors }
+      },
+      exportText: state.outputText || null
+    };
+  }
+
+  function exportJson() {
+    if (state.phase !== 'revealed') { toast('揭示牌面后才能导出完整状态。'); return; }
+    const data = buildStateJson();
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json;charset=utf-8' });
+    downloadBlob(blob, 'tarot-state-' + fileStamp() + '.json');
+    toast('完整状态 JSON 已导出。');
+  }
+
+  /* ============================================================
+   * 17. 弹层与提示
+   * ========================================================== */
+  function openModal(node) {
+    node.hidden = false;
+    requestAnimationFrame(function () { node.classList.add('open'); });
+  }
+
+  function closeModal(node) {
+    node.classList.remove('open');
+    setTimeout(function () { node.hidden = true; }, 240);
+  }
+
+  function closeAllModals() {
+    [el.confirmModal, el.cardModal].forEach(function (node) {
+      if (!node.hidden) {
+        node.classList.remove('open');
+        node.hidden = true;
+      }
+    });
+  }
+
+  function confirmDialog(title, body, okText, cancelText) {
+    if (confirmResolver) {
+      const old = confirmResolver;
+      confirmResolver = null;
+      old(false);
+    }
+    el.confirmTitle.textContent = title;
+    el.confirmBody.textContent = body;
+    el.confirmOk.textContent = okText || '确认';
+    el.confirmCancel.textContent = cancelText || '取消';
+    openModal(el.confirmModal);
+    return new Promise(function (resolve) {
+      confirmResolver = resolve;
+    });
+  }
+
+  function settleConfirm(value) {
+    if (!confirmResolver) return;
+    const r = confirmResolver;
+    confirmResolver = null;
+    closeModal(el.confirmModal);
+    r(value);
+  }
+
+  function toast(msg) {
+    el.toast.textContent = msg;
+    el.toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { el.toast.classList.remove('show'); }, 2600);
+  }
+
+  /* ============================================================
+   * 18. 事件绑定
+   * ========================================================== */
+  function bindEvents() {
+    el.opButtons.addEventListener('click', function (e) {
+      const btn = e.target.closest('[data-op]');
+      if (!btn || btn.disabled) return;
+      const op = btn.dataset.op;
+      if (op === 'emotion') opEmotion();
+      else if (op === 'diverge') opDiverge();
+      else if (op === 'converge') opConverge();
+      else if (op === 'reverse') opReverse();
+      else if (op === 'advance') opAdvance();
+    });
+
+    el.reverseModes.addEventListener('click', function (e) {
+      const btn = e.target.closest('[data-mode]');
+      if (!btn || btn.disabled) return;
+      state.reverseMode = btn.dataset.mode;
+      Array.from(el.reverseModes.children).forEach(function (b) {
+        const on = b.dataset.mode === state.reverseMode;
+        b.classList.toggle('on', on);
+        b.setAttribute('aria-checked', on ? 'true' : 'false');
+      });
+      const mode = REVERSE_MODES[state.reverseMode];
+      el.reverseModeName.textContent = mode.label;
+      el.reverseModeDesc.textContent = mode.desc;
+    });
+
+    el.undoBtn.addEventListener('click', doUndo);
+    el.resetBtn.addEventListener('click', resetAll);
+
+    el.selectionList.addEventListener('click', function (e) {
+      const btn = e.target.closest('[data-remove]');
+      if (!btn) return;
+      if (state.phase === 'revealed') { toast('揭示后不能取消已选卡牌，请「返回编辑」或「重新开始」。'); return; }
+      if (hasGridContent()) { toast('网格已引用抽牌序号，取消会打乱序号对应关系。请先清空网格或「重新开始」。'); return; }
+      const uid = parseInt(btn.dataset.remove, 10);
+      const idx = state.selection.indexOf(uid);
+      if (idx < 0) return;
+      pushUndo();
+      state.selection.splice(idx, 1);
+      renumberSelection();
+      renderSelection();
+      renderCards();
+      markStale();
+      updateStage();
+      updateOpButtons();
+      toast('已取消第 ' + (idx + 1) + ' 张，其余序号已重排');
+    });
+
+    el.revealBtn.addEventListener('click', revealCards);
+    el.backToEditBtn.addEventListener('click', backToEdit);
+
+    el.question.addEventListener('input', function () {
+      markStale();
+      updateStage();
+    });
+    [el.extraSubject, el.extraRange, el.extraContext].forEach(function (input) {
+      input.addEventListener('input', markStale);
+    });
+
+    el.gridSize.addEventListener('change', function () {
+      const size = parseInt(el.gridSize.value, 10);
+      const apply = function () {
+        pushUndo();
+        state.grid.size = size;
+        state.grid.cells = new Array(size * size).fill(null);
+        state.selectedCell = null;
+        buildGridDom();
+        renderAll();
+        markStale();
+        toast('网格已调整为 ' + size + ' × ' + size + '（原内容已清空）');
+      };
+      if (hasGridContent()) {
+        confirmDialog('改变网格尺寸？', '改变尺寸会清空当前网格中的所有方块与序号，是否继续？', '清空并调整', '取消')
+          .then(function (ok) {
+            if (ok) apply();
+            else el.gridSize.value = String(state.grid.size);
+          });
+      } else {
+        apply();
+      }
+    });
+
+    el.allowDup.addEventListener('change', function () {
+      state.allowDup = el.allowDup.checked;
+      validateNow();
+      markStale();
+    });
+
+    el.gridBoard.addEventListener('click', function (e) {
+      const cell = e.target.closest('.gcell');
+      if (!cell) return;
+      onCellClick(parseInt(cell.dataset.r, 10), parseInt(cell.dataset.c, 10));
+    });
+
+    el.gridEditor.addEventListener('click', function (e) {
+      const typeBtn = e.target.closest('[data-celltype]');
+      if (typeBtn) {
+        setCellType(typeBtn.dataset.celltype);
+        return;
+      }
+      if (e.target.closest('[data-clearcell]')) {
+        if (!state.selectedCell) return;
+        setCellType('');
+      }
+    });
+
+    el.gridEditor.addEventListener('change', function (e) {
+      if (e.target && e.target.id === 'cellIndex') {
+        const v = e.target.value;
+        setCellIndex(v ? parseInt(v, 10) : null);
+      }
+    });
+
+    el.genBtn.addEventListener('click', generateOutput);
+    el.copyBtn.addEventListener('click', copyOutput);
+    el.pngBtn.addEventListener('click', exportPng);
+    el.jsonBtn.addEventListener('click', exportJson);
+
+    el.confirmOk.addEventListener('click', function () { settleConfirm(true); });
+    el.confirmCancel.addEventListener('click', function () { settleConfirm(false); });
+    el.confirmModal.addEventListener('click', function (e) {
+      if (e.target === el.confirmModal) settleConfirm(false);
+    });
+
+    el.cardModalClose.addEventListener('click', function () { closeModal(el.cardModal); });
+    el.cardModal.addEventListener('click', function (e) {
+      if (e.target === el.cardModal) closeModal(el.cardModal);
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        if (!el.confirmModal.hidden) { settleConfirm(false); return; }
+        if (!el.cardModal.hidden) { closeModal(el.cardModal); return; }
+      }
+      const tag = (e.target.tagName || '').toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+      if (e.key === 'z' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        doUndo();
+      }
+    });
+  }
+
+  /* ============================================================
+   * 19. 启动
+   * ========================================================== */
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+  /* 调试与二次开发入口 */
+  window.SPATIAL = {
+    state: state,
+    rules: RULES,
+    dirs: DIRS,
+    modes: REVERSE_MODES,
+    ops: { emotion: opEmotion, diverge: opDiverge, converge: opConverge, reverse: opReverse, advance: opAdvance },
+    analyzeGrid: analyzeGrid,
+    validateGrid: validateGrid,
+    buildText: buildExportText,
+    buildJson: buildStateJson,
+    buildCanvas: buildGridCanvas,
+    reveal: revealCards,
+    reset: resetAll
+  };
+})();
+
+</script>
+</body>
+</html>

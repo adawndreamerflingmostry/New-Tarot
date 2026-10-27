@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <title>塔罗 · 抽牌</title>
+  <meta name="description" content="一个可以洗牌、结束洗牌、按数量抽牌的交互式塔罗牌程序，每张牌都有独立牌面与完整牌义。">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230b0820'/%3E%3Cpath d='M32 10l5.4 16.6L54 32l-16.6 5.4L32 54l-5.4-16.6L10 32l16.6-5.4z' fill='%23e2c17c'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="stars" aria-hidden="true"></div>
+
+  <div class="app">
+    <header class="masthead">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">✦</div>
+        <div>
+          <h1>塔罗<span>·</span>抽牌</h1>
+          <p class="tagline">静心 · 提问 · 让牌说话</p>
+        </div>
+      </div>
+      <div class="masthead-right">
+        <p class="deck-note">78 张 · 大阿卡纳 22 + 小阿卡纳 56</p>
+        <a class="mode-link" href="spatial.html">空间塔罗 · 思维语法系统 →</a>
+      </div>
+    </header>
+
+    <div class="controls" role="group" aria-label="抽牌控制">
+      <div class="btn-group">
+        <button id="shuffleBtn" class="btn btn-gold" type="button">
+          <span class="btn-icon" aria-hidden="true">✦</span>开始洗牌
+        </button>
+        <button id="stopBtn" class="btn btn-line" type="button" disabled>结束洗牌</button>
+      </div>
+
+      <span class="control-divider" aria-hidden="true"></span>
+
+      <div class="draw-group">
+        <label class="count-field" for="countInput">
+          <span class="count-label">抽牌数量</span>
+          <span class="stepper">
+            <button id="minusBtn" class="step" type="button" aria-label="减少一张">−</button>
+            <input id="countInput" type="number" min="1" max="10" step="1" value="3" inputmode="numeric" aria-label="抽牌数量，1 到 10">
+            <button id="plusBtn" class="step" type="button" aria-label="增加一张">+</button>
+          </span>
+        </label>
+        <button id="drawBtn" class="btn btn-primary" type="button" disabled>抽牌</button>
+        <button id="resetBtn" class="btn btn-ghost" type="button">重置</button>
+      </div>
+    </div>
+
+    <main class="table">
+      <section class="deck-panel" aria-label="牌堆">
+        <div class="deck-stage" id="deckStage">
+          <div class="deck" id="deck" aria-hidden="true"></div>
+        </div>
+        <div class="deck-meta">
+          <span class="deck-count" id="deckCount">78</span>
+          <span class="deck-label">张牌</span>
+        </div>
+        <div class="deck-state" id="deckState">待洗牌</div>
+      </section>
+
+      <section class="spread" id="spread" aria-label="牌阵">
+        <div class="spread-empty" id="spreadEmpty">
+          <div class="empty-card" aria-hidden="true"><span>✦</span></div>
+          <p>洗牌结束后，选择数量开始抽牌</p>
+        </div>
+        <div class="fan" id="fan"></div>
+        <ul class="drawn-list" id="drawnList" aria-label="抽出的牌"></ul>
+      </section>
+    </main>
+
+    <p class="status" id="status" role="status" aria-live="polite" data-tone="">点击「开始洗牌」，让牌堆动起来。</p>
+
+    <p class="shortcuts" aria-hidden="true">S 洗牌 · 空格停止 · D 抽牌 · R 重置 · 点击牌面查看牌义</p>
+  </div>
+
+  <div class="modal" id="modal" role="dialog" aria-modal="true" aria-label="牌义详情" hidden>
+    <div class="modal-inner">
+      <button class="modal-close" id="modalClose" type="button" aria-label="关闭">✕</button>
+      <div class="modal-card" id="modalCard"></div>
+      <div class="modal-info" id="modalInfo"></div>
+    </div>
+  </div>
+
+  <script src="tarot-data.js"></script>
+  <script src="card-art.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

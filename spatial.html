@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <title>空间塔罗 · 思维语法系统</title>
+  <meta name="description" content="78 张塔罗牌的空间运动、四向语义、自定义语法网格与外部解读资料导出系统。纯前端，无需联网。">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230b0820'/%3E%3Ccircle cx='32' cy='32' r='18' fill='none' stroke='%23e2c17c' stroke-width='2'/%3E%3Ccircle cx='32' cy='32' r='5' fill='%23e2c17c'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="spatial.css">
+</head>
+<body>
+  <div class="sys-app">
+
+    <!-- ============ 顶部 ============ -->
+    <header class="sys-header">
+      <div class="sys-brand">
+        <a class="back-link" href="index.html">← 传统抽牌</a>
+        <div class="sys-title">
+          <h1>空间塔罗 <span>·</span> 思维语法系统</h1>
+          <p class="sys-sub">78 张牌的空间运动 · 四向语义 · 语法网格 · 解读资料导出</p>
+        </div>
+      </div>
+      <nav class="stage-bar" id="stageBar" aria-label="当前阶段">
+        <span class="stage" data-stage="ask"><i>1</i>提问</span>
+        <span class="stage" data-stage="operate"><i>2</i>思维操作</span>
+        <span class="stage" data-stage="draw"><i>3</i>抽牌</span>
+        <span class="stage" data-stage="reveal"><i>4</i>揭示</span>
+        <span class="stage" data-stage="grid"><i>5</i>语法网格</span>
+        <span class="stage" data-stage="export"><i>6</i>解读资料</span>
+      </nav>
+    </header>
+
+    <!-- ============ 问题 ============ -->
+    <section class="panel question-panel">
+      <div class="panel-head">
+        <h2>① 你的问题</h2>
+        <span class="hint">程序只原样保存，不理解、不推断、不改写</span>
+      </div>
+      <textarea id="questionInput" class="question-input" rows="2"
+        placeholder="例如：我关注的这个事物在未来一段时间内会怎样发展？　或者：这件事是否可能出现转折？"></textarea>
+      <details class="extra">
+        <summary>补充信息（可选）</summary>
+        <div class="extra-grid">
+          <label>预测对象<input id="extraSubject" type="text" placeholder="例如：一段关系 / 一个项目"></label>
+          <label>关注时间范围<input id="extraRange" type="text" placeholder="例如：未来三个月"></label>
+          <label class="wide">补充背景<textarea id="extraContext" rows="2" placeholder="任何你希望带入本次解读的背景，可不填"></textarea></label>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============ 桌布 + 控制栏 ============ -->
+    <div class="desk">
+      <section class="panel table-panel">
+        <div class="panel-head">
+          <h2>② 神秘学桌布</h2>
+          <span class="badge" id="tableBadge">78 张牌</span>
+        </div>
+        <div class="table-wrap">
+          <div class="tablecloth" id="tablecloth">
+            <canvas class="cloth-tex" id="clothTex" aria-hidden="true"></canvas>
+            <div class="cloth-frame" aria-hidden="true"></div>
+            <div class="time-axis" id="timeAxis" aria-hidden="true">
+              <span class="ta-label">时间推进</span>
+              <i class="ta-line"></i>
+              <i class="ta-head"></i>
+            </div>
+            <div class="cards-layer" id="cardsLayer"></div>
+            <div class="table-hint" id="tableHint">牌背朝上 · 点击牌背即可选牌</div>
+          </div>
+          <div class="table-foot">
+            <span class="tf-item" id="tableFootHint">点击牌背即可选牌</span>
+            <span class="tf-item">已选 <b id="selCount">0</b> 张</span>
+            <span class="tf-item" id="freezeLabel">牌面方向可编辑</span>
+            <span class="tf-item dir-digest">方向 <span id="dirDigest">—</span></span>
+          </div>
+          <p class="shuffle-note">洗牌 / 初始随机分布只决定抽牌的随机性，不承载语义，不参与解读。</p>
+          <div class="dir-legend">
+            <span><i class="d-u"></i>正向 0°：保留基础寓意</span>
+            <span><i class="d-r"></i>逆向 180°：相反方向</span>
+            <span><i class="d-i"></i>向内 270°：内在 / 回溯</span>
+            <span><i class="d-o"></i>向外 90°：推进 / 显化</span>
+          </div>
+        </div>
+      </section>
+
+      <aside class="rail">
+        <!-- 思维操作 -->
+        <section class="panel op-panel">
+          <div class="panel-head">
+            <h2>③ 思维操作</h2>
+            <span class="hint">每次点击都作用于全部 78 张牌</span>
+          </div>
+          <div class="op-list" id="opButtons">
+            <button class="op-btn" type="button" data-op="emotion">
+              <span class="op-glyph">☾</span>
+              <span class="op-text"><b>心绪 · 欲求</b><small>节奏与累积次数驱动混沌运动</small></span>
+              <span class="op-count" data-count="emotion">0</span>
+            </button>
+            <button class="op-btn" type="button" data-op="diverge">
+              <span class="op-glyph">✺</span>
+              <span class="op-text"><b>发散 · 探索</b><small>牌与牌相互排斥，可能性展开</small></span>
+              <span class="op-count" data-count="diverge">0</span>
+            </button>
+            <button class="op-btn" type="button" data-op="converge">
+              <span class="op-glyph">◈</span>
+              <span class="op-text"><b>皈依 · 实在</b><small>牌与牌相互吸引，形成局部聚集</small></span>
+              <span class="op-count" data-count="converge">0</span>
+            </button>
+            <button class="op-btn op-reverse" type="button" data-op="reverse">
+              <span class="op-glyph">⇅</span>
+              <span class="op-text"><b>反转 · 否定</b><small>全部牌方向整体反转 180°</small></span>
+              <span class="op-count" data-count="reverse">0</span>
+            </button>
+            <button class="op-btn" type="button" data-op="advance">
+              <span class="op-glyph">⇥</span>
+              <span class="op-text"><b>推进 · 演化</b><small>沿时间轴方向共同推进</small></span>
+              <span class="op-count" data-count="advance">0</span>
+            </button>
+          </div>
+
+          <div class="reverse-box" id="reverseBox">
+            <div class="rb-head">
+              <span>反转语义模式</span>
+              <em id="reverseModeName">反向探索</em>
+            </div>
+            <div class="segmented" id="reverseModes" role="radiogroup" aria-label="反转语义模式">
+              <button type="button" data-mode="reverseExplore" class="on" role="radio" aria-checked="true">反向探索</button>
+              <button type="button" data-mode="negate" role="radio" aria-checked="false">否定质疑</button>
+              <button type="button" data-mode="turn" role="radio" aria-checked="false">转折转向</button>
+            </div>
+            <p class="rb-desc" id="reverseModeDesc">探索与原有方向相反的可能性，纳入相反发展方向的考察。</p>
+          </div>
+
+          <div class="rail-actions">
+            <button type="button" class="btn ghost" id="undoBtn" disabled>撤销上一步</button>
+            <button type="button" class="btn ghost danger" id="resetBtn">重新开始</button>
+          </div>
+          <p class="rail-status" id="railStatus">等待操作 · 累计 0 次</p>
+        </section>
+
+        <!-- 抽牌 -->
+        <section class="panel draw-panel">
+          <div class="panel-head">
+            <h2>④ 抽牌</h2>
+            <span class="badge" id="selBadge">0 张</span>
+          </div>
+          <ol class="selection" id="selectionList"></ol>
+          <p class="sel-empty" id="selEmpty">点击桌布上的牌背，按点击顺序抽取。揭示前只显示序号，不显示牌面。</p>
+          <button type="button" class="btn primary wide" id="revealBtn" disabled>预测 / 揭示牌面</button>
+          <button type="button" class="btn ghost wide" id="backToEditBtn" hidden>返回编辑</button>
+        </section>
+
+        <!-- 历史 -->
+        <section class="panel log-panel">
+          <div class="panel-head">
+            <h2>操作历史</h2>
+            <span class="hint" id="eventCount">0 次</span>
+          </div>
+          <ol class="event-list" id="eventLog"></ol>
+        </section>
+      </aside>
+    </div>
+
+    <!-- ============ 已揭示 ============ -->
+    <section class="panel gallery-panel" id="galleryPanel" hidden>
+      <div class="panel-head">
+        <h2>⑤ 已揭示牌面</h2>
+        <span class="hint">方向与位置已冻结 · 点击卡片查看牌义</span>
+      </div>
+      <div class="gallery" id="revealedGallery"></div>
+    </section>
+
+    <!-- ============ 网格 ============ -->
+    <section class="panel grid-panel" id="gridSection" hidden>
+      <div class="panel-head">
+        <h2>⑥ 自定义语法网格</h2>
+        <div class="grid-tools">
+          <span class="legend"><i class="sw main"></i>主干方块 M <i class="sw mod"></i>绿色修饰 G</span>
+          <label class="adv-check"><input type="checkbox" id="allowDup"> 允许重复引用同一张牌</label>
+          <label class="size-field">尺寸
+            <select id="gridSize" aria-label="网格尺寸"></select>
+          </label>
+          <span class="hint" id="gridHint">点击格子进行编辑</span>
+        </div>
+      </div>
+      <div class="grid-status">
+        <p class="grid-ok" id="gridOk">网格为空：至少放置一个主干方块。</p>
+        <ul class="grid-errors" id="gridErrors"></ul>
+      </div>
+      <div class="grid-layout">
+        <div class="grid-scroll">
+        <div class="grid-frame">
+          <div class="grid-corner"></div>
+          <div class="grid-col-labels" id="gridColLabels" aria-hidden="true"></div>
+          <div class="grid-row-labels" id="gridRowLabels" aria-hidden="true"></div>
+          <div class="grid-board" id="gridBoard"></div>
+        </div>
+        </div>
+        <div class="grid-editor" id="gridEditor"></div>
+      </div>
+      <p class="grid-note">主干方块可水平或斜向相连、不可直接上下相邻；绿色方块只能垂直相连并必须挂在主干上。所有校验只提示、不自动修改你的结构。小屏设备可左右滑动查看全部 15 列。</p>
+    </section>
+
+    <!-- ============ 导出 ============ -->
+    <section class="panel export-panel" id="exportSection" hidden>
+      <div class="panel-head">
+        <h2>⑦ 解读资料</h2>
+        <span class="hint" id="exportHint">文本、图片与 JSON 全部来自当前真实状态</span>
+      </div>
+      <div class="export-actions">
+        <button type="button" class="btn primary" id="genBtn">生成解读资料</button>
+        <button type="button" class="btn ghost" id="copyBtn" disabled>复制全部文字</button>
+        <button type="button" class="btn ghost" id="pngBtn" disabled>导出网格 PNG</button>
+        <button type="button" class="btn ghost" id="jsonBtn" disabled>导出完整状态 JSON</button>
+      </div>
+      <pre class="output" id="outputText" tabindex="0">还没有生成资料。在网格编辑完成后点击「生成解读资料」。</pre>
+    </section>
+
+    <footer class="sys-foot">
+      <span>纯前端 · 无需联网 · 不调用任何 AI 接口</span>
+      <span>全部 78 张牌共享同一套卡牌数据模型</span>
+    </footer>
+  </div>
+
+  <!-- 确认弹层 -->
+  <div class="modal" id="confirmModal" role="dialog" aria-modal="true" aria-labelledby="confirmTitle" hidden>
+    <div class="modal-box">
+      <h3 id="confirmTitle">确认操作</h3>
+      <p id="confirmBody"></p>
+      <div class="modal-actions">
+        <button type="button" class="btn ghost" id="confirmCancel">取消</button>
+        <button type="button" class="btn primary" id="confirmOk">确认</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 牌义弹层 -->
+  <div class="modal" id="cardModal" role="dialog" aria-modal="true" aria-labelledby="cardModalTitle" hidden>
+    <div class="modal-box card-modal-box">
+      <button class="modal-close" id="cardModalClose" type="button" aria-label="关闭">✕</button>
+      <div class="card-modal-art" id="cardModalArt"></div>
+      <div class="card-modal-info" id="cardModalInfo"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="tarot-data.js"></script>
+  <script src="card-art.js"></script>
+  <script src="spatial.js"></script>
+</body>
+</html>

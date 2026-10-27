@@ -1,0 +1,10 @@
+node_modules/
+.DS_Store
+Thumbs.db
+*.log
+
+# 本地测试与浏览器临时目录
+.check/
+.shots/
+.edge-profile*/
+.final/
